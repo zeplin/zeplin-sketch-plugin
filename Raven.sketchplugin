@@ -1,0 +1,98 @@
+#import 'Set.js'
+
+var colorSet = new Set();
+
+function getLayerTypeName(layer) {
+    return layer.toString().match(/^<(.*):/)[1];
+}
+
+function getColors(layer) {
+    var layerType = layer.className().toString(),
+        color;
+    
+    if (layerType == "MSTextLayer") {
+        colorSet.add(layer.textColor().stringValueWithAlpha(true).toString());
+    } else if (layerType == "MSShapeGroup" || layerType == "MSBitmapLayer") {
+        var style = layer.style(),
+            fills = style.fills() || [];
+
+        for (var j = 0; j < fills.count(); j++) {
+            var fill = fills.objectAtIndex(j);
+            colorSet.add(fill.color().stringValueWithAlpha(true).toString());
+        }
+    }
+}
+
+function newRandomProjectName() {
+    var names = [
+        "Flappy Bird clone",
+        "Yet another weather app",
+        "Next big thing",
+        "Yet another to-do app"
+    ];
+    
+    return names[Math.floor(Math.random() * names.length)];
+}
+
+var project = { layers: [] },
+    projectName = [doc askForUserInput:"Project Name"
+                          initialValue:newRandomProjectName()],
+    page = doc.currentPage(),
+    layers = page.artboards().objectAtIndex(0).children(),
+    layerIter = layers.objectEnumerator(),
+    layer;
+
+while(msLayer = layerIter.nextObject()) {
+    var layerType = msLayer.className().toString(),
+        layer;
+    
+    if (layerType == "MSTextLayer") {
+        layer = {
+            type: layerType,
+            content: msLayer.name(),
+            color: msLayer.textColor().stringValueWithAlpha(true).toString(),
+            fontSize: msLayer.fontSize(),
+            fontFace: msLayer.fontPostscriptName(),
+            textAlign: msLayer.textAlignment(),
+            letterSpacing: msLayer.characterSpacing(),
+            lineHeight: msLayer.lineSpacing()
+        };
+        
+        getColors(msLayer);
+        project.layers.push(layer);
+    } else if (layerType == "MSShapeGroup" ||
+               layerType == "MSBitmapLayer") {
+        
+        var style = msLayer.style(),
+            rect = msLayer.frame(),
+            fills = style.fills() || [],
+            colors = [];
+
+        for (var j = 0; j < fills.count(); j++) {
+            var fill = fills.objectAtIndex(j);
+            colors.push(fill.color().stringValueWithAlpha(true).toString());
+        }
+        
+        layer = {
+            type: layerType,
+            colors: colors,
+            position: {
+                x: rect.x(),
+                y: rect.y()
+            },
+            size: {
+                width: rect.width(),
+                height: rect.height()
+            }
+        };
+        
+        getColors(msLayer);
+        project.layers.push(layer);
+    }
+});
+
+project.name = projectName;
+project.colors = colorSet.toArray();
+
+log(colorSet.toString());
+log(project);
