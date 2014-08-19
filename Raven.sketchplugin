@@ -1,26 +1,201 @@
-#import 'Set.js'
+#import 'ColorSet.js'
 
-var colorSet = new Set();
+var BorderPosition = {
+    CENTER: 0,
+    INSIDE: 1,
+    OUTSIDE: 2
+};
 
-function getLayerTypeName(layer) {
-    return layer.toString().match(/^<(.*):/)[1];
+var BorderFillType = {
+    COLOR: 0,
+    GRADIENT: 1
+};
+
+var FillFillType = {
+    COLOR: 0,
+    GRADIENT: 1,
+    PATTERN: 4
+};
+
+var GradientType = {
+    LINEAR: 0,
+    RADIAL: 1,
+    ANGULAR: 2
+};
+
+var ShadowType = {
+    OUTER: 0,
+    INNER: 1
+};
+
+var allColors = new ColorSet();
+
+function toJSString(str) {
+    return new String(str).toString();
 }
 
-function getColors(layer) {
-    var layerType = layer.className().toString(),
-        color;
-    
-    if (layerType == "MSTextLayer") {
-        colorSet.add(layer.textColor().stringValueWithAlpha(true).toString());
-    } else if (layerType == "MSShapeGroup" || layerType == "MSBitmapLayer") {
-        var style = layer.style(),
-            fills = style.fills() || [];
+function toJSON(obj) {
+    switch (toJSString(obj.className())) {
+        case "GKRect":
+        case "MSRect":
+            return {
+                x: obj.x(),
+                y: obj.y(),
+                width: obj.width(),
+                height: obj.height()
+            };
+            
+        case "MSColor":
+            return {
+                r: obj.red(),
+                g: obj.green(),
+                b: obj.blue(),
+                a: obj.alpha()
+            };
+        
+        case "MOStruct":
+        case "CGPoint":
+            return {
+                x: parseFloat(obj.x),
+                y: parseFloat(obj.y)
+            };
+            
+        case "MSGradientStop":
+            var color = toJSON(obj.color());
+            allColors.add(color);
+            
+            return {
+                color: color,
+                position: obj.position()
+            };
+            
+        case "MSGradient":
+            var msStop, stops = [],
+                stopIter = obj.stops().array().objectEnumerator();
+            while (msStop = stopIter.nextObject()) {
+                stops.push(toJSON(msStop));
+            }
+            
+            return {
+                type: obj.gradientType(),
+                from: toJSON(obj.from()),
+                to: toJSON(obj.to()),
+                stops: stops
+            };
+            
+        case "MSShadow":
+            return {
+                type: ShadowType.OUTER,
+                offsetX: obj.offsetX(),
+                offsetY: obj.offsetY(),
+                blurRadius: obj.blurRadius(),
+                spread: obj.spread(),
+                color: toJSON(obj.color())
+            };
+            
+        case "MSInnerShadow":
+            return {
+                type: ShadowType.INNER,
+                offsetX: obj.offsetX(),
+                offsetY: obj.offsetY(),
+                blurRadius: obj.blurRadius(),
+                spread: obj.spread(),
+                color: toJSON(obj.color())
+            };
+        
+        default:
+            return null;
+    }
+}
 
-        for (var j = 0; j < fills.count(); j++) {
-            var fill = fills.objectAtIndex(j);
-            colorSet.add(fill.color().stringValueWithAlpha(true).toString());
+function getBorders(style) {
+    var msBorder, borders = [],
+        borderIter = style.borders().array().objectEnumerator();
+    while (msBorder = borderIter.nextObject()) {
+        if (msBorder.isEnabled()) {
+            var borderFillType = msBorder.fillType(),
+                border = {
+                    fillType: borderFillType,
+                    position: msBorder.position(),
+                    thickness: msBorder.thickness()
+                };
+
+            switch (borderFillType) {
+                case BorderFillType.COLOR:
+                    var color = toJSON(msBorder.color());
+                    border.color = color;
+                    allColors.add(color);
+                    break;
+
+                case BorderFillType.GRADIENT:
+                    border.gradient = toJSON(msBorder.gradient());
+                    break;
+
+                default:
+                    // no such border fill type
+            }
+
+            borders.push(border);
         }
     }
+    
+    return borders;
+}
+
+function getFills(style) {
+    var msFill, fills = [],
+        fillIter = style.fills().array().objectEnumerator();
+    while (msFill = fillIter.nextObject()) {
+        if (msFill.isEnabled()) {
+            var fillFillType = msFill.fillType(),
+                fill = {
+                    fillType: fillFillType,
+                    noiseIntensity: msFill.noiseIntensity()
+                };
+
+            switch (msFill.fillType()) {
+                case FillFillType.COLOR:
+                    var color = toJSON(msFill.color());
+                    fill.color = color;
+                    allColors.add(color);
+                    break;
+
+                case FillFillType.GRADIENT:
+                    fill.gradient = toJSON(msFill.gradient());
+                    break;
+
+                case FillFillType.PATTERN:
+                    // we do not support pattern fill type (at least for now)
+                    break;
+
+                default:
+                    // no such fill fill type
+            }
+
+            fills.push(fill);
+        }
+    }
+    
+    return fills;
+}
+
+function getShadows(style) {
+    var msShadow, shadows = [],
+        shadowIter = style.shadows().array().objectEnumerator();
+    while (msShadow = shadowIter.nextObject()) {
+        if (msShadow.isEnabled()) {
+            shadows.push(toJSON(msShadow)));
+        }
+    }
+    
+    shadowIter = style.innerShadows().array().objectEnumerator();
+    while (msShadow = shadowIter.nextObject()) {
+        if (msShadow.isEnabled()) {
+            shadows.push(toJSON(msShadow));
+        }
+    }
+    
+    return shadows;
 }
 
 function newRandomProjectName() {
@@ -34,65 +209,108 @@ function newRandomProjectName() {
     return names[Math.floor(Math.random() * names.length)];
 }
 
-var project = { layers: [] },
-    projectName = [doc askForUserInput:"Project Name"
-                          initialValue:newRandomProjectName()],
-    page = doc.currentPage(),
-    layers = page.artboards().objectAtIndex(0).children(),
-    layerIter = layers.objectEnumerator(),
-    layer;
+var artboards = doc.currentPage().artboards(),
+    artboardCount = artboards.count(),
+    checkboxes = [],
+    i = 0;
 
-while(msLayer = layerIter.nextObject()) {
-    var layerType = msLayer.className().toString(),
-        layer;
+var containerView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 100, artboardCount * 25)];
+var msArtboard, artboardIter = artboards.objectEnumerator();
+while (msArtboard = artboardIter.nextObject()) {
+    var checkbox = [[NSButton alloc] initWithFrame:NSMakeRect(0,i*25,100,25)]
+    [checkbox setButtonType:NSSwitchButton]
+    [checkbox setBezelStyle:0]
+    [checkbox setTitle:msArtboard.name()]
+    [checkbox setTag:i]
+    [checkbox setState:NSOffState]
     
-    if (layerType == "MSTextLayer") {
-        layer = {
-            type: layerType,
-            content: msLayer.name(),
-            color: msLayer.textColor().stringValueWithAlpha(true).toString(),
-            fontSize: msLayer.fontSize(),
-            fontFace: msLayer.fontPostscriptName(),
-            textAlign: msLayer.textAlignment(),
-            letterSpacing: msLayer.characterSpacing(),
-            lineHeight: msLayer.lineSpacing()
-        };
-        
-        getColors(msLayer);
-        project.layers.push(layer);
-    } else if (layerType == "MSShapeGroup" ||
-               layerType == "MSBitmapLayer") {
-        
-        var style = msLayer.style(),
-            rect = msLayer.frame(),
-            fills = style.fills() || [],
-            colors = [];
+    [containerView addSubview:checkbox]
+    
+    checkboxes.push(checkbox);
+    
+    i++;
+}
 
-        for (var j = 0; j < fills.count(); j++) {
-            var fill = fills.objectAtIndex(j);
-            colors.push(fill.color().stringValueWithAlpha(true).toString());
-        }
-        
-        layer = {
-            type: layerType,
-            colors: colors,
-            position: {
-                x: rect.x(),
-                y: rect.y()
-            },
-            size: {
-                width: rect.width(),
-                height: rect.height()
+var alert = [[NSAlert alloc] init]
+[alert setMessageText:"Select screens you want to export"]
+[alert addButtonWithTitle:'OK']
+[alert addButtonWithTitle:'Cancel']
+[alert setAccessoryView:containerView]
+[alert runModal]
+
+var project = {
+    screens: []
+};
+
+var projectName = [doc askForUserInput:"Project name"
+                        initialValue:newRandomProjectName()];
+
+/*
+var msArtboard, i = 0,
+    artboardIter = artboards.objectEnumerator();*/
+//while (msArtboard = artboardIter.nextObject()) {
+checkboxes.forEach(function (checkbox, i) {
+    //if(checkboxes[i].state()) {
+    if(checkbox.state()) {
+        var msLayer, layers = [],
+            msArtboard = artboards.objectAtIndex(i),
+            //layerIter = msArtboard.children().objectEnumerator();
+            layerIter = artboards.objectAtIndex(i).children().objectEnumerator();
+        while(msLayer = layerIter.nextObject()) {
+            var layerType = toJSString(msLayer.className()),
+                layer = {
+                    type: layerType === "MSTextLayer" ? "text" : "shape",
+                    rect: toJSON(msLayer.frame())
+                };
+
+            switch (layerType) {
+                case "MSTextLayer":
+                    var color = toJSON(msLayer.textColor());
+
+                    allColors.add(color);
+
+                    layer.content = toJSString(msLayer.name());
+                    layer.color = color;
+                    layer.fontSize = msLayer.fontSize();
+                    layer.fontFace = toJSString(msLayer.fontPostscriptName());
+                    layer.textAlign = msLayer.textAlignment();
+                    layer.letterSpacing = msLayer.characterSpacing();
+                    layer.lineHeight = msLayer.lineSpacing();
+
+                case "MSShapeGroup":
+                case "MSBitmapLayer":
+                    var style = msLayer.style();
+
+                    layer.borders = getBorders(style);
+                    layer.fills = getFills(style);
+                    layer.shadows = getShadows(style);
+
+                    layers.push(layer);
+                    break;
             }
-        };
-        
-        getColors(msLayer);
-        project.layers.push(layer);
+        }
+
+        project.screens.push({
+            name: toJSString(msArtboard.name()),
+            layers: layers
+        });
     }
+    
+    //i++;
 });
 
-project.name = projectName;
-project.colors = colorSet.toArray();
+project.name = toJSString(projectName);
+project.colors = allColors.toArray();
 
-log(colorSet.toString());
-log(project);
+//log(allColors.toString());
+//log(JSON.stringify(project));
+
+var path = NSTemporaryDirectory().stringByAppendingPathComponent("project.json");
+    content = NSString.stringWithString(JSON.stringify(project/*, null, 4*/));
+    success = [content writeToFile:path
+                        atomically:false
+                          encoding:NSUTF8StringEncoding
+                             error:null];
+
+//[[NSWorkspace sharedWorkspace] openFile:path
+//                        withApplication:@"Raven"];
