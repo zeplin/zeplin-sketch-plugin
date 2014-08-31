@@ -1,32 +1,10 @@
 #import 'ColorSet.js'
 
-var BorderPosition = {
-    CENTER: 0,
-    INSIDE: 1,
-    OUTSIDE: 2
-};
-
-var BorderFillType = {
-    COLOR: 0,
-    GRADIENT: 1
-};
-
-var FillFillType = {
-    COLOR: 0,
-    GRADIENT: 1,
-    PATTERN: 4
-};
-
-var GradientType = {
-    LINEAR: 0,
-    RADIAL: 1,
-    ANGULAR: 2
-};
-
-var ShadowType = {
-    OUTER: 0,
-    INNER: 1
-};
+var BorderPositions = ["center", "inside", "outside"];
+var FillTypes = ["color", "gradient"];
+var GradientTypes = ["linear", "radial", "angular"];
+var ShadowTypes = ["outer", "inner"];
+var TextAligns = ["left", "right", "center", "justify"];
 
 var allColors = new ColorSet();
 
@@ -44,7 +22,7 @@ function toJSON(obj) {
                 width: obj.width(),
                 height: obj.height()
             };
-            
+
         case "MSColor":
             return {
                 r: obj.red(),
@@ -52,57 +30,57 @@ function toJSON(obj) {
                 b: obj.blue(),
                 a: obj.alpha()
             };
-        
+
         case "MOStruct":
         case "CGPoint":
             return {
                 x: parseFloat(obj.x),
                 y: parseFloat(obj.y)
             };
-            
+
         case "MSGradientStop":
             var color = toJSON(obj.color());
             allColors.add(color);
-            
+
             return {
                 color: color,
                 position: obj.position()
             };
-            
+
         case "MSGradient":
             var msStop, stops = [],
                 stopIter = obj.stops().array().objectEnumerator();
             while (msStop = stopIter.nextObject()) {
                 stops.push(toJSON(msStop));
             }
-            
+
             return {
-                type: obj.gradientType(),
+                type: GradientTypes[obj.gradientType()],
                 from: toJSON(obj.from()),
                 to: toJSON(obj.to()),
                 stops: stops
             };
-            
-        case "MSShadow":
+
+        case "MSStyleShadow":
             return {
-                type: ShadowType.OUTER,
+                type: "outer",
                 offsetX: obj.offsetX(),
                 offsetY: obj.offsetY(),
                 blurRadius: obj.blurRadius(),
                 spread: obj.spread(),
                 color: toJSON(obj.color())
             };
-            
-        case "MSInnerShadow":
+
+        case "MSStyleInnerShadow":
             return {
-                type: ShadowType.INNER,
+                type: "inner",
                 offsetX: obj.offsetX(),
                 offsetY: obj.offsetY(),
                 blurRadius: obj.blurRadius(),
                 spread: obj.spread(),
                 color: toJSON(obj.color())
             };
-        
+
         default:
             return null;
     }
@@ -113,32 +91,32 @@ function getBorders(style) {
         borderIter = style.borders().array().objectEnumerator();
     while (msBorder = borderIter.nextObject()) {
         if (msBorder.isEnabled()) {
-            var borderFillType = msBorder.fillType(),
+            var fillType = FillTypes[msBorder.fillType()],
                 border = {
-                    fillType: borderFillType,
-                    position: msBorder.position(),
+                    fillType: fillType,
+                    position: BorderPositions[msBorder.position()],
                     thickness: msBorder.thickness()
                 };
 
-            switch (borderFillType) {
-                case BorderFillType.COLOR:
+            switch (fillType) {
+                case "color":
                     var color = toJSON(msBorder.color());
                     border.color = color;
                     allColors.add(color);
                     break;
 
-                case BorderFillType.GRADIENT:
+                case "gradient":
                     border.gradient = toJSON(msBorder.gradient());
                     break;
 
                 default:
-                    // no such border fill type
+                    continue;
             }
 
             borders.push(border);
         }
     }
-    
+
     return borders;
 }
 
@@ -147,35 +125,30 @@ function getFills(style) {
         fillIter = style.fills().array().objectEnumerator();
     while (msFill = fillIter.nextObject()) {
         if (msFill.isEnabled()) {
-            var fillFillType = msFill.fillType(),
+            var fillType = FillTypes[msFill.fillType()],
                 fill = {
-                    fillType: fillFillType,
-                    noiseIntensity: msFill.noiseIntensity()
+                    fillType: fillType
                 };
 
-            switch (msFill.fillType()) {
-                case FillFillType.COLOR:
+            switch (fillType) {
+                case "color":
                     var color = toJSON(msFill.color());
                     fill.color = color;
                     allColors.add(color);
                     break;
 
-                case FillFillType.GRADIENT:
+                case "gradient":
                     fill.gradient = toJSON(msFill.gradient());
                     break;
 
-                case FillFillType.PATTERN:
-                    // we do not support pattern fill type (at least for now)
-                    break;
-
                 default:
-                    // no such fill fill type
+                    continue;
             }
 
             fills.push(fill);
         }
     }
-    
+
     return fills;
 }
 
@@ -187,14 +160,14 @@ function getShadows(style) {
             shadows.push(toJSON(msShadow)));
         }
     }
-    
+
     shadowIter = style.innerShadows().array().objectEnumerator();
     while (msShadow = shadowIter.nextObject()) {
         if (msShadow.isEnabled()) {
             shadows.push(toJSON(msShadow));
         }
     }
-    
+
     return shadows;
 }
 
@@ -205,7 +178,7 @@ function newRandomProjectName() {
         "Next big thing",
         "Yet another to-do app"
     ];
-    
+
     return names[Math.floor(Math.random() * names.length)];
 }
 
@@ -223,11 +196,11 @@ while (msArtboard = artboardIter.nextObject()) {
     [checkbox setTitle:msArtboard.name()]
     [checkbox setTag:i]
     [checkbox setState:NSOffState]
-    
+
     [containerView addSubview:checkbox]
-    
+
     checkboxes.push(checkbox);
-    
+
     i++;
 }
 
@@ -245,16 +218,10 @@ var project = {
 var projectName = [doc askForUserInput:"Project name"
                         initialValue:newRandomProjectName()];
 
-/*
-var msArtboard, i = 0,
-    artboardIter = artboards.objectEnumerator();*/
-//while (msArtboard = artboardIter.nextObject()) {
 checkboxes.forEach(function (checkbox, i) {
-    //if(checkboxes[i].state()) {
     if(checkbox.state()) {
         var msLayer, layers = [],
             msArtboard = artboards.objectAtIndex(i),
-            //layerIter = msArtboard.children().objectEnumerator();
             layerIter = artboards.objectAtIndex(i).children().objectEnumerator();
         while(msLayer = layerIter.nextObject()) {
             var layerType = toJSString(msLayer.className()),
@@ -273,7 +240,7 @@ checkboxes.forEach(function (checkbox, i) {
                     layer.color = color;
                     layer.fontSize = msLayer.fontSize();
                     layer.fontFace = toJSString(msLayer.fontPostscriptName());
-                    layer.textAlign = msLayer.textAlignment();
+                    layer.textAlign = TextAligns[msLayer.textAlignment()];
                     layer.letterSpacing = msLayer.characterSpacing();
                     layer.lineHeight = msLayer.lineSpacing();
 
@@ -295,8 +262,6 @@ checkboxes.forEach(function (checkbox, i) {
             layers: layers
         });
     }
-    
-    //i++;
 });
 
 project.name = toJSString(projectName);
@@ -312,5 +277,7 @@ var path = NSTemporaryDirectory().stringByAppendingPathComponent("project.json")
                           encoding:NSUTF8StringEncoding
                              error:null];
 
+log(path);
+
 //[[NSWorkspace sharedWorkspace] openFile:path
-//                        withApplication:@"Raven"];
+//                        withApplication:@"Zeplin"];
