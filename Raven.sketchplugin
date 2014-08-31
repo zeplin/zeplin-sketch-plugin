@@ -25,9 +25,9 @@ function toJSON(obj) {
 
         case "MSColor":
             return {
-                r: obj.red(),
-                g: obj.green(),
-                b: obj.blue(),
+                r: Math.round(obj.red() * 255),
+                g: Math.round(obj.green() * 255),
+                b: Math.round(obj.blue() * 255),
                 a: obj.alpha()
             };
 
