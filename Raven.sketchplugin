@@ -256,9 +256,18 @@ checkboxes.forEach(function (checkbox, i) {
                     break;
             }
         }
+        
+        var imageFileName = NSUUID.UUID().UUIDString() + ".png",
+            imagePath = NSTemporaryDirectory().stringByAppendingPathComponent(imageFileName),
+            artboardFrame = toJSON(msArtboard.frame());
+        
+        [doc saveArtboardOrSlice:msArtboard toFile:imagePath];
 
         project.screens.push({
             name: toJSString(msArtboard.name()),
+            imageFileName: imageFileName,
+            width: artboardFrame.width,
+            height: artboardFrame.height,
             layers: layers
         });
     }
