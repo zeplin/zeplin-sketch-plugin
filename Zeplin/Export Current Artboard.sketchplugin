@@ -1,0 +1,12 @@
+// Export current selected artboard in the page (cmd e)
+
+#import 'Zeplin.js'
+
+(function () {
+    var currentArtboard = doc.currentPage().currentArtboard();
+    if(currentArtboard) {
+        new Zeplin().exportArtboards([currentArtboard]);
+    } else {
+        doc.showMessage("Please select an artboard to export.");
+    }
+})();

@@ -1,0 +1,46 @@
+// Export selected artboards (cmd alt e)
+
+#import 'Zeplin.js'
+
+(function () {
+    var msArtboards = doc.currentPage().artboards(),
+        artboards = [],
+        checkboxes = [],
+        i = 0;
+
+    var containerView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 100, msArtboards.count() * 25)];
+    var msArtboard, artboardIter = msArtboards.objectEnumerator();
+    while (msArtboard = artboardIter.nextObject()) {
+        var checkbox = [[NSButton alloc] initWithFrame:NSMakeRect(0, i * 25, 100, 25)]
+        [checkbox setButtonType:NSSwitchButton]
+        [checkbox setBezelStyle:0]
+        [checkbox setTitle:msArtboard.name()]
+        [checkbox setTag:i]
+        [checkbox setState:NSOffState]
+
+        [containerView addSubview:checkbox]
+
+        checkboxes.push(checkbox);
+        artboards.push(msArtboard);
+
+        i++;
+    }
+
+    var alert = [[NSAlert alloc] init];
+    [alert addButtonWithTitle:"OK"]
+    [alert addButtonWithTitle:"Cancel"]
+    [alert setMessageText:"Select screens you want to export"]
+    [alert setAccessoryView:containerView]
+
+    if ([alert runModal] == NSAlertFirstButtonReturn) {
+        var selectedArtboards = artboards.filter(function (artboard, i) {
+            return checkboxes[i].state();
+        });
+
+        if (selectedArtboards.length) {
+            new Zeplin().exportArtboards(selectedArtboards);
+        } else {
+            doc.showMessage("No artboard selected.");
+        }
+    }
+})();
