@@ -1,3 +1,5 @@
+// (cmd e)
+
 #import 'ColorSet.js'
 
 var BorderPositions = ["center", "inside", "outside"];
@@ -24,12 +26,15 @@ function toJSON(obj) {
             };
 
         case "MSColor":
-            return {
+            var color =  {
                 r: Math.round(obj.red() * 255),
                 g: Math.round(obj.green() * 255),
                 b: Math.round(obj.blue() * 255),
                 a: obj.alpha()
             };
+            
+            allColors.add(color);
+            return color;
 
         case "MOStruct":
         case "CGPoint":
@@ -39,11 +44,8 @@ function toJSON(obj) {
             };
 
         case "MSGradientStop":
-            var color = toJSON(obj.color());
-            allColors.add(color);
-
             return {
-                color: color,
+                color: toJSON(obj.color()),
                 position: obj.position()
             };
 
@@ -100,9 +102,7 @@ function getBorders(style) {
 
             switch (fillType) {
                 case "color":
-                    var color = toJSON(msBorder.color());
-                    border.color = color;
-                    allColors.add(color);
+                    border.color = toJSON(msBorder.color());
                     break;
 
                 case "gradient":
@@ -132,9 +132,7 @@ function getFills(style) {
 
             switch (fillType) {
                 case "color":
-                    var color = toJSON(msFill.color());
-                    fill.color = color;
-                    allColors.add(color);
+                    fill.color = toJSON(msFill.color());
                     break;
 
                 case "gradient":
@@ -171,17 +169,6 @@ function getShadows(style) {
     return shadows;
 }
 
-function newRandomProjectName() {
-    var names = [
-        "Flappy Bird clone",
-        "Yet another weather app",
-        "Next big thing",
-        "Yet another to-do app"
-    ];
-
-    return names[Math.floor(Math.random() * names.length)];
-}
-
 var artboards = doc.currentPage().artboards(),
     artboardCount = artboards.count(),
     checkboxes = [],
@@ -206,8 +193,8 @@ while (msArtboard = artboardIter.nextObject()) {
 
 var alert = [[NSAlert alloc] init]
 [alert setMessageText:"Select screens you want to export"]
-[alert addButtonWithTitle:'OK']
-[alert addButtonWithTitle:'Cancel']
+[alert addButtonWithTitle:"OK"]
+[alert addButtonWithTitle:"Cancel"]
 [alert setAccessoryView:containerView]
 [alert runModal]
 
@@ -215,15 +202,15 @@ var project = {
     screens: []
 };
 
-var projectName = [doc askForUserInput:"Project name"
-                        initialValue:newRandomProjectName()];
-
 checkboxes.forEach(function (checkbox, i) {
     if(checkbox.state()) {
         var msLayer, layers = [],
             msArtboard = artboards.objectAtIndex(i),
             layerIter = artboards.objectAtIndex(i).children().objectEnumerator();
+        
         while(msLayer = layerIter.nextObject()) {
+            var isText = false;
+            
             var layerType = toJSString(msLayer.className()),
                 layer = {
                     type: layerType === "MSTextLayer" ? "text" : "shape",
@@ -232,12 +219,8 @@ checkboxes.forEach(function (checkbox, i) {
 
             switch (layerType) {
                 case "MSTextLayer":
-                    var color = toJSON(msLayer.textColor());
-
-                    allColors.add(color);
-
                     layer.content = toJSString(msLayer.name());
-                    layer.color = color;
+                    layer.color = toJSON(msLayer.textColor());
                     layer.fontSize = msLayer.fontSize();
                     layer.fontFace = toJSString(msLayer.fontPostscriptName());
                     layer.textAlign = TextAligns[msLayer.textAlignment()];
@@ -254,7 +237,7 @@ checkboxes.forEach(function (checkbox, i) {
 
                     layers.push(layer);
                     break;
-            }
+            }            
         }
         
         var imageFileName = NSUUID.UUID().UUIDString() + ".png",
@@ -273,20 +256,19 @@ checkboxes.forEach(function (checkbox, i) {
     }
 });
 
-project.name = toJSString(projectName);
 project.colors = allColors.toArray();
 
-//log(allColors.toString());
-//log(JSON.stringify(project));
-
-var path = NSTemporaryDirectory().stringByAppendingPathComponent("project.json");
-    content = NSString.stringWithString(JSON.stringify(project/*, null, 4*/));
+var path = NSTemporaryDirectory().stringByAppendingPathComponent("project.json"),
+    content = NSString.stringWithString(JSON.stringify(project/*, null, 4*/)),
     success = [content writeToFile:path
                         atomically:false
                           encoding:NSUTF8StringEncoding
                              error:null];
 
 log(path);
+
+content = null;
+project = null;
 
 //[[NSWorkspace sharedWorkspace] openFile:path
 //                        withApplication:@"Zeplin"];
