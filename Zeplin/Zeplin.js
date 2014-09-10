@@ -214,7 +214,7 @@ function Zeplin() {
             });
         });
 
-        var path = NSTemporaryDirectory().stringByAppendingPathComponent("project.json"),
+        var path = NSTemporaryDirectory().stringByAppendingPathComponent("project.zpln"),
             content = NSString.stringWithString(JSON.stringify(project)),
             success = [content writeToFile:path
                                 atomically:false
