@@ -224,6 +224,6 @@ function Zeplin() {
         doc.showMessage("Export completed.");
 
         [[NSWorkspace sharedWorkspace] openFile:path
-                                withApplication:@"Zeplin"];
+                                withApplication:@"Zeplin (Beta)"];
     }
 }
