@@ -3,15 +3,24 @@
 #import 'Zeplin.js'
 
 (function () {
+    var MAX_ROW_COUNT = 10,
+        BUTTON_WIDTH = 160,
+        BUTTON_HEIGHT = 25,
+        ROW_WIDTH = 200;
+    
     var msArtboards = doc.currentPage().artboards(),
         artboards = [],
         checkboxes = [],
-        i = 0;
+        artboardCount = msArtboards.count(),
+        rowCount = Math.min(artboardCount, MAX_ROW_COUNT),
+        containerHeight = rowCount * BUTTON_HEIGHT,
+        columnCount = Math.ceil(artboardCount / MAX_ROW_COUNT),
+        i = 0, j = 0;
 
-    var containerView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 100, msArtboards.count() * 25)];
+    var containerView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, columnCount * ROW_WIDTH, containerHeight)];
     var msArtboard, artboardIter = msArtboards.objectEnumerator();
     while (msArtboard = artboardIter.nextObject()) {
-        var checkbox = [[NSButton alloc] initWithFrame:NSMakeRect(0, i * 25, 100, 25)]
+        var checkbox = [[NSButton alloc] initWithFrame:NSMakeRect(j * ROW_WIDTH, (rowCount - 1 - i) * BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT)]
         [checkbox setButtonType:NSSwitchButton]
         [checkbox setBezelStyle:0]
         [checkbox setTitle:msArtboard.name()]
@@ -23,7 +32,10 @@
         checkboxes.push(checkbox);
         artboards.push(msArtboard);
 
-        i++;
+        if (++i === MAX_ROW_COUNT) {
+            i = 0;
+            j++;
+        }
     }
 
     var alert = [[NSAlert alloc] init];
@@ -40,7 +52,7 @@
         if (selectedArtboards.length) {
             new Zeplin().exportArtboards(selectedArtboards);
         } else {
-            doc.showMessage("No artboard selected.");
+            doc.showMessage("No artboard selected to export.");
         }
     }
 })();
