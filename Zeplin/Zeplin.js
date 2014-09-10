@@ -1,13 +1,9 @@
-#import 'ColorSet.js'
-
 function Zeplin() {
     var BorderPositions = ["center", "inside", "outside"];
     var FillTypes = ["color", "gradient"];
     var GradientTypes = ["linear", "radial", "angular"];
     var ShadowTypes = ["outer", "inner"];
     var TextAligns = ["left", "right", "center", "justify"];
-
-    var allColors = new ColorSet();
 
     function toJSString(str) {
         return new String(str).toString();
@@ -25,15 +21,12 @@ function Zeplin() {
                 };
 
             case "MSColor":
-                var color =  {
+                return {
                     r: Math.round(obj.red() * 255),
                     g: Math.round(obj.green() * 255),
                     b: Math.round(obj.blue() * 255),
                     a: obj.alpha()
                 };
-
-                allColors.add(color);
-                return color;
 
             case "MOStruct":
             case "CGPoint":
@@ -220,8 +213,6 @@ function Zeplin() {
                 layers: layers
             });
         });
-
-        project.colors = allColors.toArray();
 
         var path = NSTemporaryDirectory().stringByAppendingPathComponent("project.json"),
             content = NSString.stringWithString(JSON.stringify(project)),
