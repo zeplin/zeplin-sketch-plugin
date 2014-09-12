@@ -173,12 +173,13 @@ function Zeplin() {
                 var layerType = toJSString(msLayer.className()),
                     layer = {
                         type: layerType === "MSTextLayer" ? "text" : "shape",
+                        name: toJSString(msLayer.name()),
                         rect: toJSON(msLayer.frame())
                     };
 
                 switch (layerType) {
                     case "MSTextLayer":
-                        layer.content = toJSString(msLayer.name());
+                        layer.content = toJSString(msLayer.storage().string());
                         layer.color = toJSON(msLayer.textColor());
                         layer.fontSize = msLayer.fontSize();
                         layer.fontFace = toJSString(msLayer.fontPostscriptName());
