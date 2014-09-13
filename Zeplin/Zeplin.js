@@ -5,79 +5,100 @@ function Zeplin() {
     var ShadowTypes = ["outer", "inner"];
     var TextAligns = ["left", "right", "center", "justify"];
 
+    function isExportable(layer) {
+        return layer instanceof MSTextLayer ||
+               layer instanceof MSShapeGroup ||
+               layer instanceof MSBitmapLayer;
+    }
+
+    function isHidden(layer) {
+        while (!(layer instanceof MSArtboardGroup)) {
+            if (!layer.isVisible()) {
+                return true;
+            }
+
+            layer = layer.parentGroup();
+        }
+
+        return false;
+    }
+
     function toJSString(str) {
         return new String(str).toString();
     }
 
-    function toJSON(obj) {
-        switch (toJSString(obj.className())) {
-            case "GKRect":
-            case "MSRect":
-                return {
-                    x: obj.x(),
-                    y: obj.y(),
-                    width: obj.width(),
-                    height: obj.height()
-                };
+    function pointToJSON(point) {
+        return {
+            x: parseFloat(point.x),
+            y: parseFloat(point.y)
+        };
+    }
 
-            case "MSColor":
-                return {
-                    r: Math.round(obj.red() * 255),
-                    g: Math.round(obj.green() * 255),
-                    b: Math.round(obj.blue() * 255),
-                    a: obj.alpha()
-                };
+    function sizeToJSON(size) {
+        return {
+            width: parseFloat(size.width),
+            height: parseFloat(size.height)
+        };
+    }
 
-            case "MOStruct":
-            case "CGPoint":
-                return {
-                    x: parseFloat(obj.x),
-                    y: parseFloat(obj.y)
-                };
-
-            case "MSGradientStop":
-                return {
-                    color: toJSON(obj.color()),
-                    position: obj.position()
-                };
-
-            case "MSGradient":
-                var stops = [],
-                    msStop, stopIter = obj.stops().array().objectEnumerator();
-                while (msStop = stopIter.nextObject()) {
-                    stops.push(toJSON(msStop));
-                }
-
-                return {
-                    type: GradientTypes[obj.gradientType()],
-                    from: toJSON(obj.from()),
-                    to: toJSON(obj.to()),
-                    stops: stops
-                };
-
-            case "MSStyleShadow":
-                return {
-                    type: "outer",
-                    offsetX: obj.offsetX(),
-                    offsetY: obj.offsetY(),
-                    blurRadius: obj.blurRadius(),
-                    spread: obj.spread(),
-                    color: toJSON(obj.color())
-                };
-
-            case "MSStyleInnerShadow":
-                return {
-                    type: "inner",
-                    offsetX: obj.offsetX(),
-                    offsetY: obj.offsetY(),
-                    blurRadius: obj.blurRadius(),
-                    spread: obj.spread(),
-                    color: toJSON(obj.color())
-                };
-
-            default:
-                return null;
+    function rectToJSON(rect, referenceRect) {
+        if (referenceRect) {
+            return {
+                x: rect.x() - referenceRect.x(),
+                y: rect.y() - referenceRect.y(),
+                width: rect.width(),
+                height: rect.height()
+            };
         }
+
+        return {
+            x: rect.x(),
+            y: rect.y(),
+            width: rect.width(),
+            height: rect.height()
+        };
+    }
+
+    function colorToJSON(color) {
+        return {
+            r: Math.round(color.red() * 255),
+            g: Math.round(color.green() * 255),
+            b: Math.round(color.blue() * 255),
+            a: color.alpha()
+        };
+    }
+
+    function colorStopToJSON(colorStop) {
+        return {
+            color: colorToJSON(colorStop.color()),
+            position: colorStop.position()
+        };
+    }
+
+    function gradientToJSON(gradient) {
+        var stops = [],
+            msStop, stopIter = gradient.stops().array().objectEnumerator();
+        while (msStop = stopIter.nextObject()) {
+            stops.push(colorStopToJSON(msStop));
+        }
+
+        return {
+            type: GradientTypes[gradient.gradientType()],
+            from: pointToJSON(gradient.from()),
+            to: pointToJSON(gradient.to()),
+            stops: stops
+        };
+    }
+
+    function shadowToJSON(shadow) {
+        return {
+            type: shadow instanceof MSStyleShadow ? "outer" : "inner",
+            offsetX: shadow.offsetX(),
+            offsetY: shadow.offsetY(),
+            blurRadius: shadow.blurRadius(),
+            spread: shadow.spread(),
+            color: colorToJSON(shadow.color())
+        };
     }
 
     function getBorders(style) {
@@ -94,11 +115,11 @@ function Zeplin() {
 
                 switch (fillType) {
                     case "color":
-                        border.color = toJSON(msBorder.color());
+                        border.color = colorToJSON(msBorder.color());
                         break;
 
                     case "gradient":
-                        border.gradient = toJSON(msBorder.gradient());
+                        border.gradient = gradientToJSON(msBorder.gradient());
                         break;
 
                     default:
@@ -108,6 +129,9 @@ function Zeplin() {
                 borders.push(border);
             }
         }
+
+        borderIter = null;
+        msBorder = null;
 
         return borders;
     }
@@ -124,11 +148,11 @@ function Zeplin() {
 
                 switch (fillType) {
                     case "color":
-                        fill.color = toJSON(msFill.color());
+                        fill.color = colorToJSON(msFill.color());
                         break;
 
                     case "gradient":
-                        fill.gradient = toJSON(msFill.gradient());
+                        fill.gradient = gradientToJSON(msFill.gradient());
                         break;
 
                     default:
@@ -139,92 +163,111 @@ function Zeplin() {
             }
         }
 
+        fillIter = null;
+        msFill = null;
+
         return fills;
     }
 
     function getShadows(style) {
-        var msShadow, shadows = [],
-            shadowIter = style.shadows().array().objectEnumerator();
+        var shadows = [],
+            msShadow, shadowIter = style.shadows().array().objectEnumerator();
         while (msShadow = shadowIter.nextObject()) {
             if (msShadow.isEnabled()) {
-                shadows.push(toJSON(msShadow)));
+                shadows.push(shadowToJSON(msShadow)));
             }
         }
 
         shadowIter = style.innerShadows().array().objectEnumerator();
         while (msShadow = shadowIter.nextObject()) {
             if (msShadow.isEnabled()) {
-                shadows.push(toJSON(msShadow));
+                shadows.push(shadowToJSON(msShadow));
             }
         }
+
+        shadowIter = null;
+        msShadow = null;
 
         return shadows;
     }
 
     this.exportArtboards = function (artboards) {
-        var project = {
-            screens: []
-        };
+        var screens = [];
 
-        artboards.forEach(function (msArtboard) {
-            var layers = [],
-                msLayer, layerIter = msArtboard.children().objectEnumerator();
+        artboards.forEach(function (msArtboard, i) {
+            var artboardFrame = msArtboard.frame(),
+                layers = [],
+                layerIter = msArtboard.children().objectEnumerator();
             while(msLayer = layerIter.nextObject()) {
-                var layerType = toJSString(msLayer.className()),
+                if (isHidden(msLayer) || !isExportable(msLayer)) {
+                    continue;
+                }
+
+                var layerStyle = msLayer.style(),
                     layer = {
-                        type: layerType === "MSTextLayer" ? "text" : "shape",
+                        type: msLayer instanceof MSTextLayer ? "text" : "shape",
                         name: toJSString(msLayer.name()),
-                        rect: toJSON(msLayer.frame())
+                        rect: rectToJSON(msLayer.absoluteRect(), artboardFrame),
+                        rotation: msLayer.rotation(),
+                        borders: getBorders(layerStyle),
+                        fills: getFills(layerStyle),
+                        shadows: getShadows(layerStyle)
                     };
 
-                switch (layerType) {
-                    case "MSTextLayer":
-                        layer.content = toJSString(msLayer.storage().string());
-                        layer.color = toJSON(msLayer.textColor());
-                        layer.fontSize = msLayer.fontSize();
-                        layer.fontFace = toJSString(msLayer.fontPostscriptName());
-                        layer.textAlign = TextAligns[msLayer.textAlignment()];
-                        layer.letterSpacing = msLayer.characterSpacing();
-                        layer.lineHeight = msLayer.lineSpacing();
-
-                    case "MSShapeGroup":
-                    case "MSBitmapLayer":
-                        var style = msLayer.style();
-
-                        layer.borders = getBorders(style);
-                        layer.fills = getFills(style);
-                        layer.shadows = getShadows(style);
-
-                        layers.push(layer);
-                        break;
+                if (msLayer instanceof MSTextLayer) {
+                    layer.content = toJSString(msLayer.storage().string());
+                    layer.color = colorToJSON(msLayer.textColor());
+                    layer.fontSize = msLayer.fontSize();
+                    layer.fontFace = toJSString(msLayer.fontPostscriptName());
+                    layer.textAlign = TextAligns[msLayer.textAlignment()];
+                    layer.letterSpacing = msLayer.characterSpacing();
+                    layer.lineHeight = msLayer.lineSpacing();
                 }
+
+                layers.push(layer);
+
+                layer = null;
+                layerStyle = null;
             }
 
-            var imageFileName = NSUUID.UUID().UUIDString() + ".png",
-                imagePath = NSTemporaryDirectory().stringByAppendingPathComponent(imageFileName),
-                artboardFrame = toJSON(msArtboard.frame());
+            var imageFileName = NSUUID.UUID().UUIDString() + ".png";
 
-            [doc saveArtboardOrSlice:msArtboard toFile:imagePath];
+            [doc saveArtboardOrSlice:msArtboard
+                              toFile:NSTemporaryDirectory().stringByAppendingPathComponent(imageFileName)];
 
-            project.screens.push({
+            imageFileName = null;
+
+            screens.push({
                 name: toJSString(msArtboard.name()),
                 imageFileName: imageFileName,
-                width: artboardFrame.width,
-                height: artboardFrame.height,
+                width: artboardFrame.width(),
+                height: artboardFrame.height(),
                 layers: layers
             });
+
+            layers = null;
+            artboards[i] = null;
+            layerIter = null;
+            artboardFrame = null;
         });
 
         var path = NSTemporaryDirectory().stringByAppendingPathComponent("project.zpln"),
-            content = NSString.stringWithString(JSON.stringify(project)),
-            success = [content writeToFile:path
-                                atomically:false
-                                  encoding:NSUTF8StringEncoding
-                                     error:null];
+            content = NSString.stringWithString(JSON.stringify({ screens: screens }));
+
+        screens = null;
+
+        [content writeToFile:path
+                  atomically:false
+                    encoding:NSUTF8StringEncoding
+                       error:null];
+
+        content = null;
 
         doc.showMessage("Export completed.");
 
         [[NSWorkspace sharedWorkspace] openFile:path
                                 withApplication:@"Zeplin (Beta)"];
+
+        path = null;
     }
 }

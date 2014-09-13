@@ -9,4 +9,4 @@
     } else {
         doc.showMessage("Please select an artboard to export.");
     }
-})();
+}());

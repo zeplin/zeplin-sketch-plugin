@@ -30,24 +30,36 @@
         [containerView addSubview:checkbox]
 
         checkboxes.push(checkbox);
+        checkbox = null;
+        
         artboards.push(msArtboard);
+        msArtboard = null;
 
         if (++i === MAX_ROW_COUNT) {
             i = 0;
             j++;
         }
     }
+    
+    msArtboards = null;
 
     var alert = [[NSAlert alloc] init];
     [alert addButtonWithTitle:"OK"]
     [alert addButtonWithTitle:"Cancel"]
     [alert setMessageText:"Select screens you want to export"]
     [alert setAccessoryView:containerView]
+    
+    containerView = null;
 
     if ([alert runModal] == NSAlertFirstButtonReturn) {
+        alert = null;
+        
         var selectedArtboards = artboards.filter(function (artboard, i) {
             return checkboxes[i].state();
         });
+        
+        artboards = null;
+        checkboxes = null;
 
         if (selectedArtboards.length) {
             new Zeplin().exportArtboards(selectedArtboards);
@@ -55,4 +67,8 @@
             doc.showMessage("No artboard selected to export.");
         }
     }
-})();
+    
+    alert = null;
+    artboards = null;
+    checkboxes = null;
+}());
