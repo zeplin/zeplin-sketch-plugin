@@ -235,8 +235,6 @@ function Zeplin() {
             [doc saveArtboardOrSlice:msArtboard
                               toFile:NSTemporaryDirectory().stringByAppendingPathComponent(imageFileName)];
 
-            imageFileName = null;
-
             screens.push({
                 name: toJSString(msArtboard.name()),
                 imageFileName: imageFileName,
@@ -249,6 +247,7 @@ function Zeplin() {
             artboards[i] = null;
             layerIter = null;
             artboardFrame = null;
+            imageFileName = null;
         });
 
         var path = NSTemporaryDirectory().stringByAppendingPathComponent("project.zpln"),
