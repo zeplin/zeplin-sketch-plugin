@@ -86,7 +86,7 @@ function Zeplin() {
             type: GradientTypes[gradient.gradientType()],
             from: pointToJSON(gradient.from()),
             to: pointToJSON(gradient.to()),
-            stops: stops
+            colorStops: stops
         };
     }
 
