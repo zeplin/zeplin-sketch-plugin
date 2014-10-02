@@ -3,72 +3,77 @@
 #import 'Zeplin.js'
 
 (function () {
-    var MAX_ROW_COUNT = 10,
-        BUTTON_WIDTH = 160,
-        BUTTON_HEIGHT = 25,
-        ROW_WIDTH = 200;
-    
-    var msArtboards = doc.currentPage().artboards(),
-        artboards = [],
-        checkboxes = [],
-        artboardCount = msArtboards.count(),
-        rowCount = Math.min(artboardCount, MAX_ROW_COUNT),
-        containerHeight = rowCount * BUTTON_HEIGHT,
-        columnCount = Math.ceil(artboardCount / MAX_ROW_COUNT),
-        i = 0, j = 0;
+    try {
+        var MAX_ROW_COUNT = 10,
+            BUTTON_WIDTH = 160,
+            BUTTON_HEIGHT = 25,
+            ROW_WIDTH = 200;
 
-    var containerView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, columnCount * ROW_WIDTH, containerHeight)];
-    var msArtboard, artboardIter = msArtboards.objectEnumerator();
-    while (msArtboard = artboardIter.nextObject()) {
-        var checkbox = [[NSButton alloc] initWithFrame:NSMakeRect(j * ROW_WIDTH, (rowCount - 1 - i) * BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT)]
-        [checkbox setButtonType:NSSwitchButton]
-        [checkbox setBezelStyle:0]
-        [checkbox setTitle:msArtboard.name()]
-        [checkbox setTag:i]
-        [checkbox setState:NSOffState]
+        var msArtboards = doc.currentPage().artboards(),
+            artboards = [],
+            checkboxes = [],
+            artboardCount = msArtboards.count(),
+            rowCount = Math.min(artboardCount, MAX_ROW_COUNT),
+            containerHeight = rowCount * BUTTON_HEIGHT,
+            columnCount = Math.ceil(artboardCount / MAX_ROW_COUNT),
+            i = 0, j = 0;
 
-        [containerView addSubview:checkbox]
+        var containerView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, columnCount * ROW_WIDTH, containerHeight)];
+        var msArtboard, artboardIter = msArtboards.objectEnumerator();
+        while (msArtboard = artboardIter.nextObject()) {
+            var checkbox = [[NSButton alloc] initWithFrame:NSMakeRect(j * ROW_WIDTH, (rowCount - 1 - i) * BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT)]
+            [checkbox setButtonType:NSSwitchButton]
+            [checkbox setBezelStyle:0]
+            [checkbox setTitle:msArtboard.name()]
+            [checkbox setTag:i]
+            [checkbox setState:NSOffState]
 
-        checkboxes.push(checkbox);
-        checkbox = null;
-        
-        artboards.push(msArtboard);
-        msArtboard = null;
+            [containerView addSubview:checkbox]
 
-        if (++i === MAX_ROW_COUNT) {
-            i = 0;
-            j++;
+            checkboxes.push(checkbox);
+            checkbox = null;
+
+            artboards.push(msArtboard);
+            msArtboard = null;
+
+            if (++i === MAX_ROW_COUNT) {
+                i = 0;
+                j++;
+            }
         }
-    }
-    
-    msArtboards = null;
 
-    var alert = [[NSAlert alloc] init];
-    [alert addButtonWithTitle:"OK"]
-    [alert addButtonWithTitle:"Cancel"]
-    [alert setMessageText:"Select screens you want to export"]
-    [alert setAccessoryView:containerView]
-    
-    containerView = null;
+        msArtboards = null;
 
-    if ([alert runModal] == NSAlertFirstButtonReturn) {
+        var alert = [[NSAlert alloc] init];
+        [alert addButtonWithTitle:"OK"]
+        [alert addButtonWithTitle:"Cancel"]
+        [alert setMessageText:"Select screens you want to export"]
+        [alert setAccessoryView:containerView]
+
+        containerView = null;
+
+        if ([alert runModal] == NSAlertFirstButtonReturn) {
+            alert = null;
+
+            var selectedArtboards = artboards.filter(function (artboard, i) {
+                return checkboxes[i].state();
+            });
+
+            artboards = null;
+            checkboxes = null;
+
+            if (selectedArtboards.length) {
+                new Zeplin().exportArtboards(selectedArtboards);
+            } else {
+                doc.showMessage("No artboard selected to export.");
+            }
+        }
+
         alert = null;
-        
-        var selectedArtboards = artboards.filter(function (artboard, i) {
-            return checkboxes[i].state();
-        });
-        
         artboards = null;
         checkboxes = null;
-
-        if (selectedArtboards.length) {
-            new Zeplin().exportArtboards(selectedArtboards);
-        } else {
-            doc.showMessage("No artboard selected to export.");
-        }
+    } catch (err) {
+        doc.showMessage("We couldn't export your artboard(s) :(");
+        log(err);
     }
-    
-    alert = null;
-    artboards = null;
-    checkboxes = null;
 }());
