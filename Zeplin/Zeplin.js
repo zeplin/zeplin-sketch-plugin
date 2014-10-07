@@ -4,6 +4,7 @@ function Zeplin() {
     var GradientTypes = ["linear", "radial", "angular"];
     var ShadowTypes = ["outer", "inner"];
     var TextAligns = ["left", "right", "center", "justify"];
+    var BlendModes = ["normal", "darken", "multiply", "color-burn", "lighten", "screen", "color-dodge", "overlay", "soft-light", "hard-light", "difference", "exclusion", "hue", "saturation", "color", "luminosity", "source-in", "source-out", "source-atop", "destination-over", "destination-in", "destination-out", "destination-atop"];
 
     function isExportable(layer) {
         return layer instanceof MSTextLayer ||
@@ -99,6 +100,22 @@ function Zeplin() {
             spread: shadow.spread(),
             color: colorToJSON(shadow.color())
         };
+    }
+
+    function getBorderRadius(layer) {
+        if (!(layer instanceof MSShapeGroup)) {
+            return 0;
+        }
+
+        var msLayer,
+            layerIter = layer.layers().array().objectEnumerator();
+        while (msLayer = layerIter.nextObject()) {
+            if (msLayer instanceof MSRectangleShape) {
+                return msLayer.fixedRadius();
+            }
+        }
+
+        return 0;
     }
 
     function getBorders(style) {
@@ -204,12 +221,16 @@ function Zeplin() {
                 }
 
                 var layerStyle = msLayer.style(),
+                    layerContextSettings = layerStyle.contextSettings(),
                     layer = {
                         type: msLayer instanceof MSTextLayer ? "text" : "shape",
                         name: toJSString(msLayer.name()),
                         rect: rectToJSON(msLayer.absoluteRect(), artboardFrame),
                         rotation: msLayer.rotation(),
+                        opacity: layerContextSettings.opacity(),
+                        blendMode: BlendModes[layerContextSettings.blendMode()],
                         borders: getBorders(layerStyle),
+                        borderRadius: getBorderRadius(msLayer),
                         fills: getFills(layerStyle),
                         shadows: getShadows(layerStyle)
                     };
