@@ -1,18 +1,48 @@
 // Export current selected artboard in the page (cmd e)
 
-#import 'Zeplin.js'
-
 (function () {
-    try {
-        var currentArtboard = doc.currentPage().currentArtboard();
+    function toJSString(str) {
+        return new String(str).toString();
+    }
     
-        if(currentArtboard) {
-            new Zeplin().exportArtboards([currentArtboard]);
+    try {
+        [doc saveDocumentWithDelegate:nil didSaveSelector:null contextInfo:null];
+        
+        if (!doc.isDraft()) {
+            var currentArtboard = doc.currentPage().currentArtboard();
+            
+            if (currentArtboard) {
+                var path = NSTemporaryDirectory().stringByAppendingPathComponent("project.zpln");
+            
+                var artboardIds = [];
+                artboardIds.push(toJSString(currentArtboard.objectID()));
+                
+                content = NSString.stringWithString(JSON.stringify({
+                    path: toJSString(doc.fileURL().path()),
+                    artboardIds: artboardIds
+                }));
+                
+                [content writeToFile:path
+                          atomically:false
+                            encoding:NSUTF8StringEncoding
+                               error:null];
+                
+                content = null;
+                
+                doc.showMessage("Export started.");
+                
+                [[NSWorkspace sharedWorkspace] openFile:path
+                                        withApplication:@"Zeplin (Beta)"];
+                
+                path = null;
+            } else {
+                doc.showMessage("Please select an artboard to export.");
+            }
         } else {
-            doc.showMessage("Please select an artboard to export.");
+            doc.showMessage("Please save the document before exporting.");
         }
     } catch (err) {
-        doc.showMessage("We couldn't export your artboard :(");
+        doc.showMessage("Could not export artboard, please try reinstalling the plugin from: zeplin.io/support");
         log(err);
     }
 }());
