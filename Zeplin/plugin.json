@@ -1,5 +1,5 @@
 {
-    "name": "Zeplin Sketch Plugin",
-    "version": "0.3",
-    "source": "web"
+    "name": "Zeplin Debug Sketch Plugin",
+    "version": "1.0",
+    "source": "appBundle"
 }
