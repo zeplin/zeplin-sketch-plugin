@@ -1,0 +1,53 @@
+// Export current selected artboard in the page (cmd y)
+
+(function () {
+    try {
+        if ([doc isDraft]) {
+            [doc saveDocumentWithDelegate:nil didSaveSelector:NULL contextInfo:NULL];
+            
+            [doc showMessage:@"Please save the document before exporting."];
+            return;
+        }
+        
+        var artboardIds = [[context valueForKey:@"selection"] valueForKeyPath:@"parentArtboard.@distinctUnionOfObjects.objectID"];
+        if (![artboardIds count]) {
+            [doc showMessage:@"Please select artboards to export."];
+            return;
+        }
+        
+        var name = [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"zpl"];
+        var temporaryDirectory = NSTemporaryDirectory();
+        var path = [temporaryDirectory stringByAppendingPathComponent:name];
+        
+        temporaryDirectory = nil;
+        name = nil;
+        
+        var directives = [NSMutableDictionary dictionary];
+        [directives setObject:[[doc fileURL] path] forKey:@"path"];
+        [directives setObject:artboardIds forKey:@"artboardIds"];
+        
+        artboardIds = nil;
+        
+        [directives writeToFile:path atomically:false];
+        directives = nil;
+        
+        var workspace = [NSWorkspace sharedWorkspace];
+        
+        var applicationPath = [workspace absolutePathForAppBundleWithIdentifier:"io.zeplin.osx.debug"];
+        if (!applicationPath) {
+            [doc showMessage:@"Could not find Zeplin, make sure you installed and launched it! https://zeplin.io/download"];
+            return;
+        }
+        
+        [doc showMessage:@"Handing over to Zeplin!"];
+        
+        [workspace openFile:path withApplication:applicationPath andDeactivate:true];
+        
+        workspace = nil;
+        applicationPath = nil;
+        path = nil;
+    } catch (err) {
+        [doc showMessage:@"Could not export artboard, please try reinstalling the plugin from: zeplin.io/support"];
+        log(err);
+    }
+}());
