@@ -1,4 +1,4 @@
-// Export current selected artboard in the page (cmd y)
+// Export current selected artboard in the page (cmd e)
 
 (function () {
     try {
