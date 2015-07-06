@@ -1,4 +1,4 @@
-// Export current selected artboard in the page (cmd e)
+// Export selected artboards to Zeplin (cmd e)
 
 (function () {
     try {
@@ -35,11 +35,11 @@
         
         var applicationPath = [workspace absolutePathForAppBundleWithIdentifier:"io.zeplin.osx"];
         if (!applicationPath) {
-            [doc showMessage:@"Could not find Zeplin, make sure you installed and launched it! https://zeplin.io/download"];
+            [doc showMessage:@"Could not find Zeplin, make sure you installed and launched it: https://zpl.io/download"];
             return;
         }
         
-        [doc showMessage:@"Handing over to Zeplin!"];
+        [doc showMessage:@"Launching Zeplin!"];
         
         [workspace openFile:path withApplication:applicationPath andDeactivate:true];
         
