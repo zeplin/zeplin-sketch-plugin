@@ -1,0 +1,19 @@
+// Ignore sublayers in Zeplin (cmd shift x)
+
+(function () {
+    try {
+        var layerEnumerator = [selection objectEnumerator];
+        var layer;
+
+        while (layer = [layerEnumerator nextObject]) {
+            var layerName = [layer name];
+
+            if (![layerName hasPrefix:@"-g-"]) {
+                [layer setName:[@"-g-" stringByAppendingString:layerName]];
+            }
+        }
+    } catch (err) {
+        [doc showMessage:@"Could not ignore layer, please try reinstalling the plugin from: zeplin.io/support"];
+        log(err);
+    }
+}());
