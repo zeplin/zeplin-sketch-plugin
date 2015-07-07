@@ -15,6 +15,22 @@
             return;
         }
         
+        var validArtboardIds = [NSMutableArray array];
+        var loop = [artboardIds objectEnumerator];
+        while (artboardId = [loop nextObject]) {
+            if ([artboardId isKindOfClass:[NSString class]]) {
+                [validArtboardIds addObject:artboardId];
+            }
+        }
+        
+        loop = nil;
+        
+        artboardIds = [validArtboardIds copy];
+        
+        log(artboardIds);
+        
+        validArtboardIds = nil;
+        
         var name = [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"zpl"];
         var temporaryDirectory = NSTemporaryDirectory();
         var path = [temporaryDirectory stringByAppendingPathComponent:name];
