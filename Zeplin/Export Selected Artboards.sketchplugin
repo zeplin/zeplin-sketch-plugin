@@ -63,7 +63,7 @@
         applicationPath = nil;
         path = nil;
     } catch (err) {
-        [doc showMessage:@"Could not export artboard, please try reinstalling the plugin from: zeplin.io/support"];
+        [doc showMessage:@"Could not export artboard, please try reinstalling the plugin from: zeplin.io/support.html"];
         log(err);
     }
 }());
