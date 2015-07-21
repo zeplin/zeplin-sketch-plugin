@@ -13,7 +13,7 @@
             }
         }
     } catch (err) {
-        [doc showMessage:@"Could not ignore layer, please try reinstalling the plugin from: zeplin.io/support"];
+        [doc showMessage:@"Could not ignore layer, please try reinstalling the plugin from: zeplin.io/support.html"];
         log(err);
     }
 }());
