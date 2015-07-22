@@ -63,7 +63,7 @@
         applicationPath = nil;
         path = nil;
     } catch (err) {
-        [doc showMessage:@"Could not export artboard, please try reinstalling the plugin from: zeplin.io/support.html"];
+        [doc showMessage:@"Could not export artboards, please make sure that you have the latest version of Sketch!"];
         log(err);
     }
 }());

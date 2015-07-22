@@ -13,7 +13,7 @@
             }
         }
     } catch (err) {
-        [doc showMessage:@"Could not ignore layer, please try reinstalling the plugin from: zeplin.io/support.html"];
+        [doc showMessage:@"Could not include sublayers, please try changing the name manually and add -g- in front."];
         log(err);
     }
 }());
