@@ -1,0 +1,19 @@
+// Include sublayers in Zeplin (cmd shift i)
+
+(function () {
+    try {
+        var layerEnumerator = [selection objectEnumerator];
+        var layer;
+
+        while (layer = [layerEnumerator nextObject]) {
+            var layerName = [layer name];
+
+            if ([layerName hasPrefix:@"-g-"]) {
+                [layer setName:[layerName substringFromIndex:3]];
+            }
+        }
+    } catch (err) {
+        [doc showMessage:@"Could not include sublayers, please try changing the name manually and add -g- in front."];
+        log(err);
+    }
+}());

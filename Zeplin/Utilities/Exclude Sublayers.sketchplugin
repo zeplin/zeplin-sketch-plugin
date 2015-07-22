@@ -1,0 +1,19 @@
+// Ignore sublayers in Zeplin (cmd shift x)
+
+(function () {
+    try {
+        var layerEnumerator = [selection objectEnumerator];
+        var layer;
+
+        while (layer = [layerEnumerator nextObject]) {
+            var layerName = [layer name];
+
+            if (![layerName hasPrefix:@"-g-"]) {
+                [layer setName:[@"-g-" stringByAppendingString:layerName]];
+            }
+        }
+    } catch (err) {
+        [doc showMessage:@"Could not exclude sublayers, please try changing the name manually and remove the -g- in front."];
+        log(err);
+    }
+}());

@@ -1,0 +1,69 @@
+// Export selected artboards to Zeplin (cmd e)
+
+(function () {
+    try {
+        if ([doc isDraft]) {
+            [doc saveDocumentWithDelegate:nil didSaveSelector:NULL contextInfo:NULL];
+            
+            [doc showMessage:@"Please save the document before exporting."];
+            return;
+        }
+        
+        var artboardIds = [[context valueForKey:@"selection"] valueForKeyPath:@"parentArtboard.@distinctUnionOfObjects.objectID"];
+        if (![artboardIds count]) {
+            [doc showMessage:@"Please select artboards to export."];
+            return;
+        }
+        
+        var validArtboardIds = [NSMutableArray array];
+        var loop = [artboardIds objectEnumerator];
+        while (artboardId = [loop nextObject]) {
+            if ([artboardId isKindOfClass:[NSString class]]) {
+                [validArtboardIds addObject:artboardId];
+            }
+        }
+        
+        loop = nil;
+        
+        artboardIds = [validArtboardIds copy];
+        
+        log(artboardIds);
+        
+        validArtboardIds = nil;
+        
+        var name = [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"zpl"];
+        var temporaryDirectory = NSTemporaryDirectory();
+        var path = [temporaryDirectory stringByAppendingPathComponent:name];
+        
+        temporaryDirectory = nil;
+        name = nil;
+        
+        var directives = [NSMutableDictionary dictionary];
+        [directives setObject:[[doc fileURL] path] forKey:@"path"];
+        [directives setObject:artboardIds forKey:@"artboardIds"];
+        
+        artboardIds = nil;
+        
+        [directives writeToFile:path atomically:false];
+        directives = nil;
+        
+        var workspace = [NSWorkspace sharedWorkspace];
+        
+        var applicationPath = [workspace absolutePathForAppBundleWithIdentifier:"io.zeplin.osx"];
+        if (!applicationPath) {
+            [doc showMessage:@"Could not find Zeplin, make sure you installed and launched it: https://zpl.io/download"];
+            return;
+        }
+        
+        [doc showMessage:@"Launching Zeplin!"];
+        
+        [workspace openFile:path withApplication:applicationPath andDeactivate:true];
+        
+        workspace = nil;
+        applicationPath = nil;
+        path = nil;
+    } catch (err) {
+        [doc showMessage:@"Could not export artboards, please make sure that you have the latest version of Sketch!"];
+        log(err);
+    }
+}());
