@@ -3,7 +3,7 @@
 (function () {
     try {
         if ([doc isDraft]) {
-            [doc saveDocumentWithDelegate:nil didSaveSelector:NULL contextInfo:NULL];
+            [doc saveDocumentWithDelegate:nil didSaveSelector:nil contextInfo:nil];
             
             [doc showMessage:@"Please save the document before exporting."];
             return;
