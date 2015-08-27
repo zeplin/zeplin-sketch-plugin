@@ -38,10 +38,16 @@
         temporaryDirectory = nil;
         name = nil;
         
+        var version = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+        
         var directives = [NSMutableDictionary dictionary];
         [directives setObject:[[doc fileURL] path] forKey:@"path"];
         [directives setObject:artboardIds forKey:@"artboardIds"];
+        if ([version length]) {
+            [directives setObject:version forKey:@"version"];
+        }
         
+        version = nil;
         artboardIds = nil;
         
         [directives writeToFile:path atomically:false];
