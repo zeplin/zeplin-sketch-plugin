@@ -27,8 +27,6 @@
         
         artboardIds = [validArtboardIds copy];
         
-        log(artboardIds);
-        
         validArtboardIds = nil;
         
         var name = [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"zpl"];
