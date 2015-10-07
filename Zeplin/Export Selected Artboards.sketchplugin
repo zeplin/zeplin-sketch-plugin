@@ -10,10 +10,6 @@
         }
         
         var artboardIds = [[context valueForKey:@"selection"] valueForKeyPath:@"parentArtboard.@distinctUnionOfObjects.objectID"];
-        if (![artboardIds count]) {
-            [doc showMessage:@"Please select artboards to export."];
-            return;
-        }
         
         var validArtboardIds = [NSMutableArray array];
         var loop = [artboardIds objectEnumerator];
@@ -28,6 +24,11 @@
         artboardIds = [validArtboardIds copy];
         
         validArtboardIds = nil;
+        
+        if (![artboardIds count]) {
+            [doc showMessage:@"Please select artboards you want to export."];
+            return;
+        }
         
         var name = [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"zpl"];
         var temporaryDirectory = NSTemporaryDirectory();
