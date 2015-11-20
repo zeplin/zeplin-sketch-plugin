@@ -8,12 +8,24 @@
         }
         
         if ([doc isDocumentEdited]) {
-            [doc showMessage:@"Saving document…"];
+            var alert = [NSAlert alertWithMessageText:@"Document not saved" defaultButton:@"Save and Continue" alternateButton:@"Cancel" otherButton:@"Continue" informativeTextWithFormat:@"To capture the latest changes in this Sketch document, Zeplin needs to save it first.\n\n☝️ This might take a bit, depending on the document size."];
             
-            [doc saveDocument:nil];
-            while ([doc isDocumentEdited]) {
-                [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
+            var response = [alert runModal];
+            if (response == NSAlertDefaultReturn) {
+                [doc showMessage:@"Saving document…"];
+                
+                [doc saveDocument:nil];
+                while ([doc isDocumentEdited]) {
+                    [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
+                }
             }
+            
+            else if (response == NSAlertAlternateReturn) {
+                return;
+            }
+            
+            response = nil;
+            alert = nil;
         }
         
         var artboardIds = [[context valueForKey:@"selection"] valueForKeyPath:@"parentArtboard.@distinctUnionOfObjects.objectID"];
