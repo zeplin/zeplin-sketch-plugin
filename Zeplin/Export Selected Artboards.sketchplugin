@@ -57,6 +57,8 @@
         name = nil;
         
         var version = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+        var sketchtoolPath = [[NSBundle mainBundle] pathForResource:@"sketchtool" ofType:nil inDirectory:@"sketchtool/bin"];
+        var sketchmigratePath = [[NSBundle mainBundle] pathForResource:@"sketchmigrate" ofType:nil inDirectory:@"sketchtool/bin"];
         
         var directives = [NSMutableDictionary dictionary];
         [directives setObject:[[doc fileURL] path] forKey:@"path"];
@@ -64,8 +66,16 @@
         if ([version length]) {
             [directives setObject:version forKey:@"version"];
         }
+        if ([sketchtoolPath length]) {
+            [directives setObject:sketchtoolPath forKey:@"sketchtoolPath"];
+        }
+        if ([sketchmigratePath length]) {
+            [directives setObject:sketchmigratePath forKey:@"sketchmigratePath"];
+        }
         
         version = nil;
+        sketchmigratePath = nil;
+        sketchtoolPath = nil;
         artboardIds = nil;
         
         [directives writeToFile:path atomically:false];
