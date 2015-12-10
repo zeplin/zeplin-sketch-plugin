@@ -63,13 +63,13 @@
         var directives = [NSMutableDictionary dictionary];
         [directives setObject:[[doc fileURL] path] forKey:@"path"];
         [directives setObject:artboardIds forKey:@"artboardIds"];
-        if ([version length]) {
+        if (version) {
             [directives setObject:version forKey:@"version"];
         }
-        if ([sketchtoolPath length]) {
+        if (sketchtoolPath) {
             [directives setObject:sketchtoolPath forKey:@"sketchtoolPath"];
         }
-        if ([sketchmigratePath length]) {
+        if (sketchmigratePath) {
             [directives setObject:sketchmigratePath forKey:@"sketchmigratePath"];
         }
         
