@@ -1,0 +1,39 @@
+{
+    "name": "Zeplin",
+    "description": "Export artboards to a Zeplin project. 🍸",
+    "author": "Zeplin, Inc.",
+    "authorEmail": "support@zeplin.io",
+    "homepage": "https://zeplin.io",
+    "version": "1.1",
+    "identifier": "io.zeplin.sketch-plugin",
+    "commands": [{
+        "name": "Export Selected Artboards…",
+        "identifier": "export",
+        "shortcut": "cmd e",
+        "script": "export.cocoascript"
+    }, {
+        "name": "Exclude Sublayers",
+        "identifier": "exclude-sublayers",
+        "shortcut": "cmd shift x",
+        "script": "utils.cocoascript",
+        "handler": "excludeSublayers"
+    }, {
+        "name": "Include Sublayers",
+        "identifier": "include-sublayers",
+        "shortcut": "cmd shift i",
+        "script": "utils.cocoascript",
+        "handler": "includeSublayers"
+    }],
+    "menu": {
+        "items": [
+            "export",
+            {
+                "title": "Utilities",
+                "items": [
+                    "exclude-sublayers",
+                    "include-sublayers"
+                ]
+            }
+        ]
+    }
+}
