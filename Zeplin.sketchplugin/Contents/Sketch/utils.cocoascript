@@ -1,4 +1,5 @@
-var excludeSublayers = function(context) {
+var excludeSublayers = function (context) {
+    var selection = context.selection;
     var layerEnumerator = [selection objectEnumerator];
     var layer;
     
@@ -14,9 +15,11 @@ var excludeSublayers = function(context) {
     
     layer = nil;
     layerEnumerator = nil;
+    selection = nil;
 }
 
-var includeSublayers = function(context) {
+var includeSublayers = function (context) {
+    var selection = context.selection;
     var layerEnumerator = [selection objectEnumerator];
     var layer;
     
@@ -32,4 +35,5 @@ var includeSublayers = function(context) {
     
     layer = nil;
     layerEnumerator = nil;
+    selection = nil;
 }
