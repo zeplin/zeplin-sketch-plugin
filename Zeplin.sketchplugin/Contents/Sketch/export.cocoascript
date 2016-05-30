@@ -1,64 +1,20 @@
 var onRun = function (context) {
     var doc = context.document;
-    
-    if (![doc fileURL] || [doc isDraft]) {
-        [NSApp displayDialog:@"Please save the document before exporting to Zeplin." withTitle:@"Document not saved"];
-        return;
+    var temporaryDirectory = NSTemporaryDirectory();
+
+    var exportableArtboards = getExportableArtboardsFromSelection(context);
+    var exportableDocumentPath = saveCopyOfDocumentToDirectory(doc, temporaryDirectory);
+
+    var artboardIds = [NSMutableArray array];
+    for (var exportableArtboard of exportableArtboards) {
+      artboardIds.addObject(exportableArtboard.objectID());
     }
-    
-    if ([doc isDocumentEdited]) {
-        var alert = [NSAlert alertWithMessageText:@"Document not saved" defaultButton:@"Save and Continue" alternateButton:@"Cancel" otherButton:@"Continue" informativeTextWithFormat:@"To capture the latest changes in this Sketch document, Zeplin needs to save it first.\n\n☝️ This might take a bit, depending on the document size."];
-        
-        var response = [alert runModal];
-        if (response == NSAlertDefaultReturn) {
-            [doc showMessage:@"Saving document…"];
-            
-            [doc saveDocument:nil];
-            while ([doc isDocumentEdited]) {
-                [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
-            }
-        }
-        
-        else if (response == NSAlertAlternateReturn) {
-            return;
-        }
-        
-        response = nil;
-        alert = nil;
-    }
-    
-    var artboardIds = [[context valueForKey:@"selection"] valueForKeyPath:@"parentArtboard.@distinctUnionOfObjects.objectID"];
-    
-    var validArtboardIds = [NSMutableArray array];
-    var loop = [[[doc currentPage] artboards] objectEnumerator];
-    while (artboard = [loop nextObject]) {
-        if (![artboard isMemberOfClass:[MSArtboardGroup class]]) {
-            continue;
-        }
-        
-        var artboardId = [artboard objectID];
-        if (![artboardIds containsObject:artboardId]) {
-            artboardId = nil
-            continue;
-        }
-        
-        [validArtboardIds addObject:artboardId];
-        artboardId = nil
-    }
-    
-    loop = nil;
-    
-    artboardIds = [validArtboardIds copy];
-    
-    validArtboardIds = nil;
-    
     if (![artboardIds count]) {
         [NSApp displayDialog:@"Please select the artboards you want to export to Zeplin.\n\n☝️ Selecting a layer inside the artboard should be enough." withTitle:@"No artboard selected"];
         return;
     }
     
     var name = [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"zpl"];
-    var temporaryDirectory = NSTemporaryDirectory();
     var path = [temporaryDirectory stringByAppendingPathComponent:name];
     
     temporaryDirectory = nil;
@@ -69,7 +25,7 @@ var onRun = function (context) {
     var sketchmigratePath = [[NSBundle mainBundle] pathForResource:@"sketchmigrate" ofType:nil inDirectory:@"sketchtool/bin"];
     
     var directives = [NSMutableDictionary dictionary];
-    [directives setObject:[[doc fileURL] path] forKey:@"path"];
+    [directives setObject:exportableDocumentPath forKey:@"path"];
     [directives setObject:artboardIds forKey:@"artboardIds"];
     if (version) {
         [directives setObject:version forKey:@"version"];
@@ -85,10 +41,16 @@ var onRun = function (context) {
     sketchmigratePath = nil;
     sketchtoolPath = nil;
     artboardIds = nil;
-    
+
+    log("Saving directive file to: " + path);
     [directives writeToFile:path atomically:false];
     directives = nil;
-    
+
+    // Clean up the temporary artboards we created for export purposes
+    for (var exportableArtboard of exportableArtboards) {
+      doc.currentPage().removeLayer(exportableArtboard);
+    }
+
     var workspace = [NSWorkspace sharedWorkspace];
     
     var applicationPath = [workspace absolutePathForAppBundleWithIdentifier:@"io.zeplin.osx"];
@@ -104,4 +66,148 @@ var onRun = function (context) {
     workspace = nil;
     applicationPath = nil;
     path = nil;
-}
+};
+
+var getExportableArtboardsFromSelection = function(context) {
+  var selection = context.selection;
+  var document = context.document;
+  var page = document.currentPage();
+  var artboards = page.artboards();
+
+  var selectedArtboards = [];
+  var selectionLoop = selection.objectEnumerator();
+  var object;
+  while (object = selectionLoop.nextObject()) {
+    var artboard = artboardForObject(object);
+    if (artboard != null) {
+      selectedArtboards.push(artboard);
+    }
+  }
+
+  var artboardsToScan = selectedArtboards.slice();
+  var artboardMap = {};
+  while (artboard = artboardsToScan.shift()) {
+    var containedArtboards = artboardsContainedByArtboard(artboard, artboards);
+    artboardMap[artboard.objectID()] = {
+      parentArtboard: artboard,
+      containedArtboards: containedArtboards
+    };
+  }
+  log("Artboards to export:");
+  log(artboardMap);
+
+  var exportableArtboards = [];
+  for (var id in artboardMap) {
+    var object = artboardMap[id];
+    var parentArtboard = object.parentArtboard;
+    var containedArtboards = object.containedArtboards;
+
+    var exportableParentArtboard = parentArtboard.copy();
+    page.addLayers([exportableParentArtboard]);
+
+    for (var containedArtboard of containedArtboards) {
+      var a = containedArtboard.duplicate();
+
+      var newX = a.frame().x() - parentArtboard.frame().x();
+      var newY = a.frame().y() - parentArtboard.frame().y();
+
+      var maskedGroup = createMaskedGroupFromArtboard(a);
+      exportableParentArtboard.addLayers([maskedGroup]);
+      page.removeLayer(a);
+
+      var newFrame = maskedGroup.frame()
+      newFrame.setX(newX);
+      newFrame.setY(newY);
+    }
+    exportableArtboards.push(exportableParentArtboard);
+  }
+
+  return exportableArtboards;
+};
+
+var arrayContainsObject = function(a, o) {
+  for (var i = 0; i < a.length; i++) {
+    var object = a[i];
+    if (object === o) {
+      return true;
+    }
+  }
+  return false;
+};
+
+var artboardForObject = function(object) {
+  if (object.isKindOfClass(MSArtboardGroup)) {
+    return object;
+  } else if (object.parentGroup() != null) {
+    return artboardForObject(object.parentGroup());
+  } else {
+    return null;
+  }
+};
+
+var artboardsContainedByArtboard = function(artboard, allArtboards) {
+  var frame = artboard.frame();
+  var containedArtboards = [];
+  var artboardLoop = allArtboards.objectEnumerator();
+  var object;
+  while (a = artboardLoop.nextObject()) {
+    if (a != artboard) {
+      var f = a.frame();
+      if (frameContainsFrame(frame, f)) {
+        containedArtboards.push(a);
+      }
+    }
+  }
+  return containedArtboards;
+};
+
+var frameContainsFrame = function(frame1, frame2) {
+  var f1 = {
+    x: frame1.x(),
+    y: frame1.y(),
+    width: frame1.width(),
+    height: frame1.height()
+  };
+  var f2 = {
+    x: frame2.x(),
+    y: frame2.y(),
+    width: frame2.width(),
+    height: frame2.height()
+  };
+  return (f1.x <= f2.x) &&
+         (f1.y <= f2.y) &&
+         (f1.x + f1.width >= f2.x + f2.width) &&
+         (f1.y + f1.height >= f2.y + f2.height);
+};
+
+var createMaskedGroupFromArtboard = function(artboard) {
+  var frame = artboard.frame();
+
+  var rectangle = MSRectangleShape.new();
+  var rectangleFrame = rectangle.frame();
+  rectangleFrame.x = 0;
+  rectangleFrame.y = 0;
+  rectangleFrame.width = frame.width();
+  rectangleFrame.height = frame.height();
+
+  var shape = MSShapeGroup.shapeWithPath(rectangle);
+  shape.setName("Mask");
+
+  artboard.insertLayers_atIndex([shape], 0);
+
+  var layersToMask = artboard.layers().array();
+  var maskedGroup = MSMaskWithShape.createMaskWithShapeFromMultipleLayers(MSLayerArray.arrayWithLayers(layersToMask));
+  maskedGroup.setName(artboard.name());
+
+  return maskedGroup;
+};
+
+var saveCopyOfDocumentToDirectory = function(document, directory) {
+  document.showMessage("Exporting…");
+  var filename = [[document fileURL] lastPathComponent];
+  var path = [directory stringByAppendingPathComponent:filename];
+  var url = [NSURL fileURLWithPath:path];
+  log("Saving copy of document to: " + path);
+  [document saveToURL:url ofType:@".sketch" forSaveOperation:NSSaveToOperation delegate:nil didSaveSelector:nil contextInfo:nil];
+  return path;
+};
