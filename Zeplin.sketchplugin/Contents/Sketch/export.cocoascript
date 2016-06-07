@@ -30,20 +30,11 @@ var onRun = function (context) {
     var artboardIds = [[context valueForKey:@"selection"] valueForKeyPath:@"parentArtboard.@distinctUnionOfObjects.objectID"];
     
     var validArtboardIds = [NSMutableArray array];
-    var loop = [[[doc currentPage] artboards] objectEnumerator];
-    while (artboard = [loop nextObject]) {
-        if (![artboard isMemberOfClass:[MSArtboardGroup class]]) {
-            continue;
+    var loop = [artboardIds objectEnumerator];
+    while (artboardId = [loop nextObject]) {
+        if ([artboardId isKindOfClass:[NSString class]]) {
+            [validArtboardIds addObject:artboardId];
         }
-        
-        var artboardId = [artboard objectID];
-        if (![artboardIds containsObject:artboardId]) {
-            artboardId = nil
-            continue;
-        }
-        
-        [validArtboardIds addObject:artboardId];
-        artboardId = nil
     }
     
     loop = nil;
