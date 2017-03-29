@@ -4,25 +4,31 @@
     "author": "Zeplin, Inc.",
     "authorEmail": "dev@zeplin.io",
     "homepage": "https://zeplin.io",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "identifier": "io.zeplin.sketch-plugin",
     "commands": [{
         "name": "Export Selected Artboards…",
         "identifier": "export",
         "shortcut": "cmd e",
-        "script": "export.cocoascript"
+        "script": "export.cocoascript",
+        "icon": "Icons/icZeplin.png",
+        "description": "Export selected artboards to a Zeplin project. 🚀"
     }, {
         "name": "Exclude Sublayers",
         "identifier": "exclude-sublayers",
         "shortcut": "cmd shift x",
         "script": "utils.cocoascript",
-        "handler": "excludeSublayers"
+        "handler": "excludeSublayers",
+        "icon": "Icons/icZeplin.png",
+        "description": "Exclude sublayers of selected groups or symbols."
     }, {
         "name": "Include Sublayers",
         "identifier": "include-sublayers",
         "shortcut": "cmd shift i",
         "script": "utils.cocoascript",
-        "handler": "includeSublayers"
+        "handler": "includeSublayers",
+        "icon": "Icons/icZeplin.png",
+        "description": "Include sublayers of selected groups or symbols."
     }],
     "menu": {
         "items": [
