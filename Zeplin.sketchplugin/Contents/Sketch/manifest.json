@@ -10,7 +10,7 @@
         "name": "Export Selected Artboards…",
         "identifier": "export",
         "shortcut": "cmd e",
-        "script": "export.cocoascript",
+        "script": "zeplin.cocoascript",
         "icon": "Icons/icZeplin.png",
         "description": "Export selected artboards to a Zeplin project. 🚀"
     }, {

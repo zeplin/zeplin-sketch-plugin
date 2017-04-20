@@ -1,0 +1,21 @@
+@import "export.cocoascript"
+
+var onRun = function (context) {
+	var bundleIdentifier = @"io.zeplin.osx";
+	var scriptPath = context.scriptPath;
+	var path = [[[scriptPath stringByDeletingLastPathComponent] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"Resources"];
+
+	if (loadFramework(path)) {
+		[ZPLPluginController exportToApplicationWithBundleIdentifier:bundleIdentifier];
+	} else {
+		exportToApplicationWithBundleIdentifier(context, bundleIdentifier);
+	}
+}
+
+function loadFramework(path) {
+	if (NSClassFromString("ZPLPluginController") == null) {
+		return [[Mocha sharedRuntime] loadFrameworkWithName:"Zeplin" inDirectory:path];
+	} else {
+		return true;
+	}
+}

@@ -1,0 +1,6 @@
+framework module Zeplin {
+  umbrella header "Zeplin.h"
+
+  export *
+  module * { export * }
+}
