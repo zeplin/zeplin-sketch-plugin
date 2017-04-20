@@ -8,7 +8,7 @@ var onRun = function (context) {
 	if (loadFramework(path)) {
 		[ZPLPluginController exportToApplicationWithBundleIdentifier:bundleIdentifier];
 	} else {
-		exportToApplicationWithBundleIdentifier(context, bundleIdentifier);
+		exportToApplication(context, bundleIdentifier);
 	}
 }
 

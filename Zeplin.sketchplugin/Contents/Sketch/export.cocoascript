@@ -1,4 +1,4 @@
-function export(context, bundleIdentifier) {
+function exportToApplication(context, bundleIdentifier) {
     var doc = context.document;
     
     if (![doc fileURL] || [doc isDraft]) {
