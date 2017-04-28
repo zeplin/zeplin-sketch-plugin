@@ -27,11 +27,13 @@ var onRun = function (context) {
         alert = nil;
     }
     
-    var artboardIds = [[context valueForKey:@"selection"] valueForKeyPath:@"@distinctUnionOfObjects.parentArtboard.objectID"];
+    var artboardIds = [context valueForKeyPath:@"selection.@distinctUnionOfObjects.parentArtboard.objectID"];
     if (![artboardIds count]) {
         [NSApp displayDialog:@"Please select the artboards you want to export to Zeplin.\n\n☝️ Selecting a layer inside the artboard should be enough." withTitle:@"No artboard selected"];
         return;
     }
+
+    var pageIds = [doc valueForKeyPath:@"documentData.allSymbols.@distinctUnionOfObjects.parentPage.objectID"];
     
     var name = [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"zpl"];
     var temporaryDirectory = NSTemporaryDirectory();
@@ -48,6 +50,7 @@ var onRun = function (context) {
     [directives setObject:[NSNumber numberWithBool:true] forKey:@"legacy"];
     [directives setObject:[[doc fileURL] path] forKey:@"path"];
     [directives setObject:artboardIds forKey:@"artboardIds"];
+    [directives setObject:pageIds forKey:@"pageIds"];
     if (version) {
         [directives setObject:version forKey:@"version"];
     }
