@@ -27,22 +27,7 @@ var onRun = function (context) {
         alert = nil;
     }
     
-    var artboardIds = [[context valueForKey:@"selection"] valueForKeyPath:@"parentArtboard.@distinctUnionOfObjects.objectID"];
-    
-    var validArtboardIds = [NSMutableArray array];
-    var loop = [artboardIds objectEnumerator];
-    while (artboardId = [loop nextObject]) {
-        if ([artboardId isKindOfClass:[NSString class]]) {
-            [validArtboardIds addObject:artboardId];
-        }
-    }
-    
-    loop = nil;
-    
-    artboardIds = [validArtboardIds copy];
-    
-    validArtboardIds = nil;
-    
+    var artboardIds = [[context valueForKey:@"selection"] valueForKeyPath:@"@distinctUnionOfObjects.parentArtboard.objectID"];
     if (![artboardIds count]) {
         [NSApp displayDialog:@"Please select the artboards you want to export to Zeplin.\n\n☝️ Selecting a layer inside the artboard should be enough." withTitle:@"No artboard selected"];
         return;
