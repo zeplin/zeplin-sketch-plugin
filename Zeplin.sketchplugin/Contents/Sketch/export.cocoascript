@@ -1,4 +1,4 @@
-function exportToApplication(context, bundleIdentifier) {
+var onRun = function (context) {
     var doc = context.document;
     
     if (![doc fileURL] || [doc isDraft]) {
@@ -27,26 +27,19 @@ function exportToApplication(context, bundleIdentifier) {
         alert = nil;
     }
     
-    var artboardIds = [[context valueForKey:@"selection"] valueForKeyPath:@"parentArtboard.@distinctUnionOfObjects.objectID"];
-    
-    var validArtboardIds = [NSMutableArray array];
-    var loop = [artboardIds objectEnumerator];
-    while (artboardId = [loop nextObject]) {
-        if ([artboardId isKindOfClass:[NSString class]]) {
-            [validArtboardIds addObject:artboardId];
-        }
-    }
-    
-    loop = nil;
-    
-    artboardIds = [validArtboardIds copy];
-    
-    validArtboardIds = nil;
-    
-    if (![artboardIds count]) {
+    var artboards = [context valueForKeyPath:@"selection.@distinctUnionOfObjects.parentArtboard"];
+    if (![artboards count]) {
         [NSApp displayDialog:@"Please select the artboards you want to export to Zeplin.\n\n☝️ Selecting a layer inside the artboard should be enough." withTitle:@"No artboard selected"];
         return;
     }
+
+    var artboardIds = [artboards valueForKeyPath:@"objectID"];
+
+    var layers = [[[doc documentData] allSymbols] arrayByAddingObjectsFromArray:artboards];
+    var pageIds = [layers valueForKeyPath:@"@distinctUnionOfObjects.parentPage.objectID"];
+
+    layers = nil;
+    artboards = nil;
     
     var name = [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"zpl"];
     var temporaryDirectory = NSTemporaryDirectory();
@@ -60,9 +53,9 @@ function exportToApplication(context, bundleIdentifier) {
     var sketchmigratePath = [[NSBundle mainBundle] pathForResource:@"sketchmigrate" ofType:nil inDirectory:@"sketchtool/bin"];
     
     var directives = [NSMutableDictionary dictionary];
-    [directives setObject:[NSNumber numberWithBool:true] forKey:@"legacy"];
     [directives setObject:[[doc fileURL] path] forKey:@"path"];
     [directives setObject:artboardIds forKey:@"artboardIds"];
+    [directives setObject:pageIds forKey:@"pageIds"];
     if (version) {
         [directives setObject:version forKey:@"version"];
     }
@@ -76,6 +69,7 @@ function exportToApplication(context, bundleIdentifier) {
     version = nil;
     sketchmigratePath = nil;
     sketchtoolPath = nil;
+    pageIds = nil;
     artboardIds = nil;
     
     [directives writeToFile:path atomically:false];
@@ -83,7 +77,7 @@ function exportToApplication(context, bundleIdentifier) {
     
     var workspace = [NSWorkspace sharedWorkspace];
     
-    var applicationPath = [workspace absolutePathForAppBundleWithIdentifier:bundleIdentifier];
+    var applicationPath = [workspace absolutePathForAppBundleWithIdentifier:@"io.zeplin.osx"];
     if (!applicationPath) {
         [NSApp displayDialog:@"Please make sure that you installed and launched it: https://zpl.io/download" withTitle:"Could not find Zeplin"];
         return;
