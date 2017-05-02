@@ -4,13 +4,13 @@
     "author": "Zeplin, Inc.",
     "authorEmail": "dev@zeplin.io",
     "homepage": "https://zeplin.io",
-    "version": "1.3.1",
+    "version": "1.4",
     "identifier": "io.zeplin.sketch-plugin",
     "commands": [{
         "name": "Export Selected Artboards…",
         "identifier": "export",
         "shortcut": "cmd e",
-        "script": "zeplin.cocoascript",
+        "script": "export.cocoascript",
         "icon": "Icons/icZeplin.png",
         "description": "Export selected artboards to a Zeplin project. 🚀"
     }, {
