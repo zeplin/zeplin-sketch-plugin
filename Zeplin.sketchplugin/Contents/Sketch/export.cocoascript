@@ -17,9 +17,7 @@ var onRun = function (context) {
             while ([doc isDocumentEdited]) {
                 [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
             }
-        }
-        
-        else if (response == NSAlertAlternateReturn) {
+        } else if (response == NSAlertAlternateReturn) {
             return;
         }
         
@@ -40,6 +38,16 @@ var onRun = function (context) {
 
     layers = nil;
     artboards = nil;
+
+    var format = @"json";
+    var readerClass = NSClassFromString(@"MSDocumentReader");
+    var jsonReaderClass = NSClassFromString(@"MSDocumentZippedJSONReader");
+    if (!readerClass || !jsonReaderClass || ![[readerClass readerForDocumentAtURL:[doc fileURL]] isKindOfClass:jsonReaderClass]) {
+        format = @"legacy";
+    }
+
+    jsonReaderClass = nil;
+    readerClass = nil;
     
     var name = [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"zpl"];
     var temporaryDirectory = NSTemporaryDirectory();
@@ -56,6 +64,7 @@ var onRun = function (context) {
     [directives setObject:[[doc fileURL] path] forKey:@"path"];
     [directives setObject:artboardIds forKey:@"artboardIds"];
     [directives setObject:pageIds forKey:@"pageIds"];
+    [directives setObject:format forKey:@"format"];
     if (version) {
         [directives setObject:version forKey:@"version"];
     }
@@ -69,6 +78,7 @@ var onRun = function (context) {
     version = nil;
     sketchmigratePath = nil;
     sketchtoolPath = nil;
+    format = nil;
     pageIds = nil;
     artboardIds = nil;
     
