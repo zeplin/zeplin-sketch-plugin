@@ -36,6 +36,34 @@ var onRun = function (context) {
     var layers = [[[doc documentData] allSymbols] arrayByAddingObjectsFromArray:artboards];
     var pageIds = [layers valueForKeyPath:@"@distinctUnionOfObjects.parentPage.objectID"];
 
+    var uniqueArtboardSizes = [];
+    var loop = [artboards objectEnumerator];
+    var artboard = nil;
+    while (artboard = [loop nextObject]) {
+        var artboardSize = artboard.rect().size;
+        
+        var isUnique = true;
+        for (var k = 0; k < uniqueArtboardSizes.length; k++) {
+            if (uniqueArtboardSizes[k].width == artboardSize.width && uniqueArtboardSizes[k].height == artboardSize.height) {
+                isUnique = false;
+
+                break;
+            }
+        }
+
+        if (isUnique) {
+            uniqueArtboardSizes.push({
+                width: artboardSize.width, 
+                height: artboardSize.height
+            });
+        }
+        
+        artboardSize = nil;
+        isUnique = nil;
+    }
+
+    artboard = nil;
+    loop = nil;
     layers = nil;
     artboards = nil;
 
@@ -65,6 +93,7 @@ var onRun = function (context) {
     [directives setObject:artboardIds forKey:@"artboardIds"];
     [directives setObject:pageIds forKey:@"pageIds"];
     [directives setObject:format forKey:@"format"];
+    [directives setObject:uniqueArtboardSizes forKey:@"artboardSizes"];
     if (version) {
         [directives setObject:version forKey:@"version"];
     }
@@ -79,6 +108,7 @@ var onRun = function (context) {
     sketchmigratePath = nil;
     sketchtoolPath = nil;
     format = nil;
+    uniqueArtboardSizes = nil;
     pageIds = nil;
     artboardIds = nil;
     
