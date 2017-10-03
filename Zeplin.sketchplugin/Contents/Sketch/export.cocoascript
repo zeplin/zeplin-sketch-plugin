@@ -40,8 +40,16 @@ var onRun = function (context) {
     var loop = [artboards objectEnumerator];
     var artboard = nil;
     while (artboard = [loop nextObject]) {
-        var artboardSize = artboard.rect().size;
-        
+        var artboardSize;
+
+        // Due to an error on Mocha, we weren't able to read size property of CGRect.
+        // This happens on previous versions of Sketch and is fixed on 46.
+        try {
+            artboardSize = artboard.rect().size;
+        } catch (error) {
+            continue;
+        }
+
         var isUnique = true;
         for (var k = 0; k < uniqueArtboardSizes.length; k++) {
             if (uniqueArtboardSizes[k].width == artboardSize.width && uniqueArtboardSizes[k].height == artboardSize.height) {
