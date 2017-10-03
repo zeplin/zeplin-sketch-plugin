@@ -43,7 +43,7 @@ var onRun = function (context) {
         var artboardSize;
 
         // Due to an error on Mocha, we weren't able to read size property of CGRect.
-        // This happens Sketch 43, 44, and 45 on macOS 10.13 and later and is fixed on Sketch 46.
+        // This happens on previous versions of Sketch and is fixed on 46.
         try {
             artboardSize = artboard.rect().size;
         } catch (error) {
