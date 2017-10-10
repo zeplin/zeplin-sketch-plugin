@@ -97,12 +97,12 @@ var onRun = function (context) {
                 continue;
             }
             
-            var path = [[assetLibrary locationOnDisk] path];
-            if (!path) {
+            var url = [assetLibrary locationOnDisk];
+            if (!url) {
                 continue;
             }
             
-            [assetLibraryPathsByIdentifier setObject:path forKey:[assetLibrary libraryID]];
+            [assetLibraryPathsByIdentifier setObject:[url path] forKey:[assetLibrary libraryID]];
         }
         
         assetLibrary = nil;
