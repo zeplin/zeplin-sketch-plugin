@@ -85,31 +85,28 @@ var onRun = function (context) {
     jsonReaderClass = nil;
     readerClass = nil;
     
-    var assetLibraryPaths = nil;
+    var assetLibraryPathsByIdentifier = [[NSMutableDictionary alloc] init];
     var assetLibraryControllerClass = NSClassFromString(@"MSAssetLibraryController");
     if (assetLibraryControllerClass) {
         var assetLibraryController = [[assetLibraryControllerClass alloc] init];
+        var assetLibrariesLoop = [[assetLibraryController libraries] objectEnumerator];
         
-        var assetLibraries = [assetLibraryController libraries];
-        if ([assetLibraries count]) {
-            assetLibraryPaths = {};
-            
-            var assetLibrariesLoop = [assetLibraries objectEnumerator];
-            
-            var assetLibrary = nil;
-            while (assetLibrary = [assetLibrariesLoop nextObject]) {
-                if (![assetLibrary enabled]) {
-                    continue;
-                }
-                
-                assetLibraryPaths[[assetLibrary libraryID]] = [assetLibrary locationOnDisk];
+        var assetLibrary = nil;
+        while (assetLibrary = [assetLibrariesLoop nextObject]) {
+            if (![assetLibrary enabled]) {
+                continue;
             }
             
-            assetLibrary = nil;
-            assetLibrariesLoop = nil;
+            var path = [[assetLibrary locationOnDisk] path];
+            if (!path) {
+                continue;
+            }
+            
+            [assetLibraryPathsByIdentifier setObject:path forKey:[assetLibrary libraryID]];
         }
         
-        assetLibraries = nil;
+        assetLibrary = nil;
+        assetLibrariesLoop = nil;
         assetLibraryController = nil;
     }
     
@@ -132,8 +129,8 @@ var onRun = function (context) {
     [directives setObject:pageIds forKey:@"pageIds"];
     [directives setObject:format forKey:@"format"];
     [directives setObject:uniqueArtboardSizes forKey:@"artboardSizes"];
-    if (assetLibraryPaths) {
-        [directives setObject:assetLibraryPaths forKey:@"assetLibraryPaths"];
+    if ([assetLibraryPathsByIdentifier count]) {
+        [directives setObject:assetLibraryPathsByIdentifier forKey:@"assetLibraryPaths"];
     }
     if (version) {
         [directives setObject:version forKey:@"version"];
