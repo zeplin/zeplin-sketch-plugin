@@ -85,19 +85,31 @@ var onRun = function (context) {
     jsonReaderClass = nil;
     readerClass = nil;
     
-    var assetLibraryPaths = {};
+    var assetLibraryPaths = nil;
     var assetLibraryControllerClass = NSClassFromString(@"MSAssetLibraryController");
     if (assetLibraryControllerClass) {
         var assetLibraryController = [[assetLibraryControllerClass alloc] init];
-        var assetLibrariesLoop = [[assetLibraryController libraries] objectEnumerator];
         
-        var assetLibrary = nil;
-        while (assetLibrary = [assetLibrariesLoop nextObject]) {
-            assetLibraryPaths[[assetLibrary libraryID]] = [assetLibrary locationOnDisk];
+        var assetLibraries = [assetLibraryController libraries];
+        if ([assetLibraries count]) {
+            assetLibraryPaths = {};
+            
+            var assetLibrariesLoop = [assetLibraries objectEnumerator];
+            
+            var assetLibrary = nil;
+            while (assetLibrary = [assetLibrariesLoop nextObject]) {
+                if (![assetLibrary enabled]) {
+                    continue;
+                }
+                
+                assetLibraryPaths[[assetLibrary libraryID]] = [assetLibrary locationOnDisk];
+            }
+            
+            assetLibrary = nil;
+            assetLibrariesLoop = nil;
         }
         
-        assetLibrary = nil;
-        assetLibrariesLoop = nil;
+        assetLibraries = nil;
         assetLibraryController = nil;
     }
     
@@ -119,8 +131,10 @@ var onRun = function (context) {
     [directives setObject:artboardIds forKey:@"artboardIds"];
     [directives setObject:pageIds forKey:@"pageIds"];
     [directives setObject:format forKey:@"format"];
-    [directives setObject:assetLibraryPaths forKey:@"assetLibraryPaths"];
     [directives setObject:uniqueArtboardSizes forKey:@"artboardSizes"];
+    if (assetLibraryPaths) {
+        [directives setObject:assetLibraryPaths forKey:@"assetLibraryPaths"];
+    }
     if (version) {
         [directives setObject:version forKey:@"version"];
     }
