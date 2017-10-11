@@ -25,6 +25,34 @@ var onRun = function (context) {
         alert = nil;
     }
     
+    var foreignSymbolsUpToDate = true;
+    if ([doc respondsToSelector:NSSelectorFromString(@"badgeController")]) {
+        var activeActions = [[doc badgeController] activeWindowBadgingActions];
+        var activeActionsLoop = [activeActions objectEnumerator];
+        var action = nil;
+        while (action = [activeActionsLoop nextObject]) {
+            if ([action isKindOfClass:NSClassFromString(@"MSSyncLibraryAction")]) {
+                foreignSymbolsUpToDate = false;
+    
+                break;
+            }
+        }
+        
+        action = nil;
+        activeActionsLoop = nil;
+        activeActions = nil;
+    }
+    
+    if (!foreignSymbolsUpToDate) {
+        var alert = [NSAlert alertWithMessageText:@"Symbols not up to date" defaultButton:@"Continue and Export" alternateButton:@"Cancel" otherButton:nil informativeTextWithFormat:@"To capture the latest changes in your libraries, make sure that your symbols are up to date before exporting artboards to Zeplin.\n\n☝️ Select “Library Update Available” on the top right to review changes."];
+        
+        if ([alert runModal] == NSAlertAlternateReturn) {
+            return;
+        }
+        
+        alert = nil;
+    }
+    
     var artboards = [context valueForKeyPath:@"selection.@distinctUnionOfObjects.parentArtboard"];
     if (![artboards count]) {
         [NSApp displayDialog:@"Please select the artboards you want to export to Zeplin.\n\n☝️ Selecting a layer inside the artboard should be enough." withTitle:@"No artboard selected"];
