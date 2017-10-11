@@ -25,6 +25,34 @@ var onRun = function (context) {
         alert = nil;
     }
     
+    var foreignSymbolsUpToDate = true;
+    if ([doc respondsToSelector:NSSelectorFromString(@"badgeController")]) {
+        var activeActions = [[doc badgeController] activeWindowBadgingActions];
+        var activeActionsLoop = [activeActions objectEnumerator];
+        var action = nil;
+        while (action = [activeActionsLoop nextObject]) {
+            if ([action isKindOfClass:NSClassFromString(@"MSSyncLibraryAction")]) {
+                foreignSymbolsUpToDate = false;
+    
+                break;
+            }
+        }
+        
+        action = nil;
+        activeActionsLoop = nil;
+        activeActions = nil;
+    }
+    
+    if (!foreignSymbolsUpToDate) {
+        var alert = [NSAlert alertWithMessageText:@"Symbols not up to date" defaultButton:@"Continue and Export" alternateButton:@"Cancel" otherButton:nil informativeTextWithFormat:@"To capture the latest changes in your libraries, make sure that your symbols are up to date before exporting artboards to Zeplin.\n\n☝️ Select “Library Update Available” on the top right to review changes."];
+        
+        if ([alert runModal] == NSAlertAlternateReturn) {
+            return;
+        }
+        
+        alert = nil;
+    }
+    
     var artboards = [context valueForKeyPath:@"selection.@distinctUnionOfObjects.parentArtboard"];
     if (![artboards count]) {
         [NSApp displayDialog:@"Please select the artboards you want to export to Zeplin.\n\n☝️ Selecting a layer inside the artboard should be enough." withTitle:@"No artboard selected"];
@@ -85,6 +113,27 @@ var onRun = function (context) {
     jsonReaderClass = nil;
     readerClass = nil;
     
+    var assetLibraryPathsByIdentifier = [[NSMutableDictionary alloc] init];
+    if ([[AppController sharedInstance] respondsToSelector:NSSelectorFromString(@"librariesController")]) {
+        var assetLibrariesLoop = [[[[AppController sharedInstance] librariesController] libraries] objectEnumerator];
+        var assetLibrary = nil;
+        while (assetLibrary = [assetLibrariesLoop nextObject]) {
+            if (![assetLibrary enabled]) {
+                continue;
+            }
+            
+            var url = [assetLibrary locationOnDisk];
+            if (!url) {
+                continue;
+            }
+            
+            [assetLibraryPathsByIdentifier setObject:[url path] forKey:[assetLibrary libraryID]];
+        }
+        
+        assetLibrary = nil;
+        assetLibrariesLoop = nil;
+    }
+    
     var name = [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"zpl"];
     var temporaryDirectory = NSTemporaryDirectory();
     var path = [temporaryDirectory stringByAppendingPathComponent:name];
@@ -102,6 +151,9 @@ var onRun = function (context) {
     [directives setObject:pageIds forKey:@"pageIds"];
     [directives setObject:format forKey:@"format"];
     [directives setObject:uniqueArtboardSizes forKey:@"artboardSizes"];
+    if ([assetLibraryPathsByIdentifier count]) {
+        [directives setObject:assetLibraryPathsByIdentifier forKey:@"assetLibraryPaths"];
+    }
     if (version) {
         [directives setObject:version forKey:@"version"];
     }
@@ -115,6 +167,7 @@ var onRun = function (context) {
     version = nil;
     sketchmigratePath = nil;
     sketchtoolPath = nil;
+    assetLibraryPathsByIdentifier = nil;
     format = nil;
     uniqueArtboardSizes = nil;
     pageIds = nil;
@@ -138,4 +191,14 @@ var onRun = function (context) {
     workspace = nil;
     applicationPath = nil;
     path = nil;
+}
+
+var shortcutHelp = function (context) {
+    var alert = [NSAlert alertWithMessageText:@"Shortcut changed to ⌃⌘E" defaultButton:@"Continue and Export" alternateButton:@"Cancel" otherButton:nil informativeTextWithFormat:@"Due to recent shortcuts tweaks on Sketch, Zeplin's “Export Selected Artboards…” shortcut is now ⌃⌘E.\n\n☝️ That's Command, Control, E."];
+    
+    if ([alert runModal] == NSAlertDefaultReturn) {
+        onRun(context);
+    }
+    
+    alert = nil;
 }
