@@ -85,6 +85,27 @@ var onRun = function (context) {
     jsonReaderClass = nil;
     readerClass = nil;
     
+    var assetLibraryPathsByIdentifier = [[NSMutableDictionary alloc] init];
+    if ([[AppController sharedInstance] respondsToSelector:NSSelectorFromString(@"librariesController")]) {
+        var assetLibrariesLoop = [[[[AppController sharedInstance] librariesController] libraries] objectEnumerator];
+        var assetLibrary = nil;
+        while (assetLibrary = [assetLibrariesLoop nextObject]) {
+            if (![assetLibrary enabled]) {
+                continue;
+            }
+            
+            var url = [assetLibrary locationOnDisk];
+            if (!url) {
+                continue;
+            }
+            
+            [assetLibraryPathsByIdentifier setObject:[url path] forKey:[assetLibrary libraryID]];
+        }
+        
+        assetLibrary = nil;
+        assetLibrariesLoop = nil;
+    }
+    
     var name = [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"zpl"];
     var temporaryDirectory = NSTemporaryDirectory();
     var path = [temporaryDirectory stringByAppendingPathComponent:name];
@@ -102,6 +123,9 @@ var onRun = function (context) {
     [directives setObject:pageIds forKey:@"pageIds"];
     [directives setObject:format forKey:@"format"];
     [directives setObject:uniqueArtboardSizes forKey:@"artboardSizes"];
+    if ([assetLibraryPathsByIdentifier count]) {
+        [directives setObject:assetLibraryPathsByIdentifier forKey:@"assetLibraryPaths"];
+    }
     if (version) {
         [directives setObject:version forKey:@"version"];
     }
@@ -115,6 +139,7 @@ var onRun = function (context) {
     version = nil;
     sketchmigratePath = nil;
     sketchtoolPath = nil;
+    assetLibraryPathsByIdentifier = nil;
     format = nil;
     uniqueArtboardSizes = nil;
     pageIds = nil;
