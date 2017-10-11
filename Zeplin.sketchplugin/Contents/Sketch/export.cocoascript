@@ -34,7 +34,7 @@ var onRun = function (context) {
         while (action = [activeActionsLoop nextObject]) {
             if ([action isKindOfClass:NSClassFromString(@"MSSyncLibraryAction")]) {
                 foreignSymbolsUpToDate = false;
-        
+                
                 break;
             }
         }
