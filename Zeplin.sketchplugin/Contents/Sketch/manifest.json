@@ -4,7 +4,7 @@
     "author": "Zeplin, Inc.",
     "authorEmail": "dev@zeplin.io",
     "homepage": "https://zeplin.io",
-    "version": "1.6",
+    "version": "1.6.1",
     "identifier": "io.zeplin.sketch-plugin",
     "commands": [{
         "name": "Export Selected Artboards…",
