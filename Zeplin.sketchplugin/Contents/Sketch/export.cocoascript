@@ -166,7 +166,7 @@ var onRun = function (context) {
 }
 
 var shortcutHelp = function (context) {
-    var alert = [NSAlert alertWithMessageText:@"Shortcut changed to ⌃⌘E" defaultButton:@"Continue and Export" alternateButton:@"Cancel" otherButton:nil informativeTextWithFormat:@"Due to recent shortcuts tweaks on Sketch, Zeplin's “Export Selected Artboards…” shortcut was changed to ⌃⌘E.\n\n☝️ That's Command, Control, E."];
+    var alert = [NSAlert alertWithMessageText:@"Shortcut changed to ⌃⌘E" defaultButton:@"Continue and Export" alternateButton:@"Cancel" otherButton:nil informativeTextWithFormat:@"Due to recent shortcuts tweaks on Sketch, Zeplin's “Export Selected Artboards…” shortcut is now ⌃⌘E.\n\n☝️ That's Command, Control, E."];
     
     if ([alert runModal] == NSAlertDefaultReturn) {
         onRun(context);
