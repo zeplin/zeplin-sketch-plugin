@@ -26,26 +26,24 @@ var onRun = function (context) {
     }
     
     var foreignSymbolsUpToDate = true;
-    if ([doc respondsToSelector:NSSelectorFromString(@"badgeController")]) {
-        var badgeController = [doc badgeController];
-        if ([badgeController respondsToSelector:NSSelectorFromString(@"activeWindowBadgingActions")]) {
-            var activeActions = [badgeController activeWindowBadgingActions];
-            var activeActionsLoop = [activeActions objectEnumerator];
-            var action = nil;
-            while (action = [activeActionsLoop nextObject]) {
-                if ([action isKindOfClass:NSClassFromString(@"MSSyncLibraryAction")]) {
-                    foreignSymbolsUpToDate = false;
-
-                    break;
-                }
+    // `MSBadgeController` is defined on Sketch 44, `activeWindowBadgingActions` is defined on Sketch 46.
+    try {
+        var activeActions = [[doc badgeController] activeWindowBadgingActions];
+        var activeActionsLoop = [activeActions objectEnumerator];
+        var action = nil;
+        while (action = [activeActionsLoop nextObject]) {
+            if ([action isKindOfClass:NSClassFromString(@"MSSyncLibraryAction")]) {
+                foreignSymbolsUpToDate = false;
+        
+                break;
             }
-
-            action = nil;
-            activeActionsLoop = nil;
-            activeActions = nil;
         }
-
-        badgeController = nil;
+        
+        action = nil;
+        activeActionsLoop = nil;
+        activeActions = nil;
+    } catch (error) {
+        log("Foreign symbols up to date failed with error “" + error + "”.");
     }
     
     if (!foreignSymbolsUpToDate) {
@@ -68,44 +66,43 @@ var onRun = function (context) {
 
     var layers = [[[doc documentData] allSymbols] arrayByAddingObjectsFromArray:artboards];
     var pageIds = [layers valueForKeyPath:@"@distinctUnionOfObjects.parentPage.objectID"];
+    
+    layers = nil;
 
     var uniqueArtboardSizes = [];
-    var loop = [artboards objectEnumerator];
-    var artboard = nil;
-    while (artboard = [loop nextObject]) {
-        var artboardSize;
-
-        // Due to an error on Mocha, we weren't able to read size property of CGRect.
-        // This happens on previous versions of Sketch and is fixed on 46.
-        try {
-            artboardSize = artboard.rect().size;
-        } catch (error) {
-            continue;
-        }
-
-        var isUnique = true;
-        for (var k = 0; k < uniqueArtboardSizes.length; k++) {
-            if (uniqueArtboardSizes[k].width == artboardSize.width && uniqueArtboardSizes[k].height == artboardSize.height) {
-                isUnique = false;
-
-                break;
+    // `size` on `CGRect` fails on Mocha, on macOS 10.13, Sketch 45 and below.
+    try {
+        var loop = [artboards objectEnumerator];
+        var artboard = nil;
+        while (artboard = [loop nextObject]) {
+            var artboardSize = artboard.rect().size;
+        
+            var isUnique = true;
+            for (var k = 0; k < uniqueArtboardSizes.length; k++) {
+                if (uniqueArtboardSizes[k].width == artboardSize.width && uniqueArtboardSizes[k].height == artboardSize.height) {
+                    isUnique = false;
+        
+                    break;
+                }
             }
-        }
-
-        if (isUnique) {
-            uniqueArtboardSizes.push({
-                width: artboardSize.width, 
-                height: artboardSize.height
-            });
+        
+            if (isUnique) {
+                uniqueArtboardSizes.push({
+                    width: artboardSize.width, 
+                    height: artboardSize.height
+                });
+            }
+            
+            artboardSize = nil;
+            isUnique = nil;
         }
         
-        artboardSize = nil;
-        isUnique = nil;
+        artboard = nil;
+        loop = nil;
+    } catch (error) {
+        log("Unique artboard sizes failed with error “" + error + "”.");
     }
-
-    artboard = nil;
-    loop = nil;
-    layers = nil;
+    
     artboards = nil;
 
     var format = @"json";
@@ -119,28 +116,27 @@ var onRun = function (context) {
     readerClass = nil;
     
     var assetLibraryPathsByIdentifier = [[NSMutableDictionary alloc] init];
-    if ([[AppController sharedInstance] respondsToSelector:NSSelectorFromString(@"librariesController")]) {
-        var libraries = [[[AppController sharedInstance] librariesController] libraries];
-        if (libraries) {
-            var assetLibrariesLoop = [libraries objectEnumerator];
-            var assetLibrary = nil;
-            while (assetLibrary = [assetLibrariesLoop nextObject]) {
-                if (![assetLibrary enabled]) {
-                    continue;
-                }
-
-                var url = [assetLibrary locationOnDisk];
-                if (!url) {
-                    continue;
-                }
-
-                [assetLibraryPathsByIdentifier setObject:[url path] forKey:[assetLibrary libraryID]];
+    // `MSAssetLibraryController` defined on Sketch 47.
+    try {
+        var assetLibrariesLoop = [[[[AppController sharedInstance] librariesController] libraries] objectEnumerator];
+        var assetLibrary = nil;
+        while (assetLibrary = [assetLibrariesLoop nextObject]) {
+            if (![assetLibrary enabled]) {
+                continue;
             }
             
-            assetLibrary = nil;
-            assetLibrariesLoop = nil;
-            libraries = nil;
+            var url = [assetLibrary locationOnDisk];
+            if (!url) {
+                continue;
+            }
+            
+            [assetLibraryPathsByIdentifier setObject:[url path] forKey:[assetLibrary libraryID]];
         }
+        
+        assetLibrary = nil;
+        assetLibrariesLoop = nil;
+    } catch (error) {
+        log("Asset library paths by identifier failed with error “" + error + "”.");
     }
     
     var name = [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"zpl"];
