@@ -27,20 +27,25 @@ var onRun = function (context) {
     
     var foreignSymbolsUpToDate = true;
     if ([doc respondsToSelector:NSSelectorFromString(@"badgeController")]) {
-        var activeActions = [[doc badgeController] activeWindowBadgingActions];
-        var activeActionsLoop = [activeActions objectEnumerator];
-        var action = nil;
-        while (action = [activeActionsLoop nextObject]) {
-            if ([action isKindOfClass:NSClassFromString(@"MSSyncLibraryAction")]) {
-                foreignSymbolsUpToDate = false;
-    
-                break;
+        var badgeController = [doc badgeController];
+        if ([badgeController respondsToSelector:NSSelectorFromString(@"activeWindowBadgingActions")]) {
+            var activeActions = [badgeController activeWindowBadgingActions];
+            var activeActionsLoop = [activeActions objectEnumerator];
+            var action = nil;
+            while (action = [activeActionsLoop nextObject]) {
+                if ([action isKindOfClass:NSClassFromString(@"MSSyncLibraryAction")]) {
+                    foreignSymbolsUpToDate = false;
+
+                    break;
+                }
             }
+
+            action = nil;
+            activeActionsLoop = nil;
+            activeActions = nil;
         }
-        
-        action = nil;
-        activeActionsLoop = nil;
-        activeActions = nil;
+
+        badgeController = nil;
     }
     
     if (!foreignSymbolsUpToDate) {
