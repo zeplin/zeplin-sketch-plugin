@@ -86,11 +86,8 @@ var onRun = function (context) {
     readerClass = nil;
     
     var assetLibraryPathsByIdentifier = [[NSMutableDictionary alloc] init];
-    var assetLibraryControllerClass = NSClassFromString(@"MSAssetLibraryController");
-    if (assetLibraryControllerClass) {
-        var assetLibraryController = [[assetLibraryControllerClass alloc] init];
-        var assetLibrariesLoop = [[assetLibraryController libraries] objectEnumerator];
-        
+    if ([[AppController sharedInstance] respondsToSelector:NSSelectorFromString(@"librariesController")]) {
+        var assetLibrariesLoop = [[[[AppController sharedInstance] librariesController] libraries] objectEnumerator];
         var assetLibrary = nil;
         while (assetLibrary = [assetLibrariesLoop nextObject]) {
             if (![assetLibrary enabled]) {
@@ -107,10 +104,7 @@ var onRun = function (context) {
         
         assetLibrary = nil;
         assetLibrariesLoop = nil;
-        assetLibraryController = nil;
     }
-    
-    assetLibraryControllerClass = nil;
     
     var name = [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"zpl"];
     var temporaryDirectory = NSTemporaryDirectory();
