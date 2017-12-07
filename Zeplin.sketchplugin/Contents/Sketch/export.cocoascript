@@ -115,7 +115,7 @@ var onRun = function (context) {
     jsonReaderClass = nil;
     readerClass = nil;
     
-    var assetLibraryPathsByIdentifier = [[NSMutableDictionary alloc] init];
+    var assetLibraries = [];
     // `MSAssetLibraryController` defined on Sketch 47.
     try {
         var assetLibrariesLoop = [[[[AppController sharedInstance] librariesController] libraries] objectEnumerator];
@@ -130,7 +130,10 @@ var onRun = function (context) {
                 continue;
             }
             
-            [assetLibraryPathsByIdentifier setObject:[url path] forKey:[assetLibrary libraryID]];
+            assetLibraries.push({
+                id: [assetLibrary libraryID], 
+                path: [url path]
+            });
         }
         
         assetLibrary = nil;
@@ -156,9 +159,7 @@ var onRun = function (context) {
     [directives setObject:pageIds forKey:@"pageIds"];
     [directives setObject:format forKey:@"format"];
     [directives setObject:uniqueArtboardSizes forKey:@"artboardSizes"];
-    if ([assetLibraryPathsByIdentifier count]) {
-        [directives setObject:assetLibraryPathsByIdentifier forKey:@"assetLibraryPaths"];
-    }
+    [directives setObject:assetLibraries forKey:@"assetLibraries"];
     if (version) {
         [directives setObject:version forKey:@"version"];
     }
@@ -172,7 +173,7 @@ var onRun = function (context) {
     version = nil;
     sketchmigratePath = nil;
     sketchtoolPath = nil;
-    assetLibraryPathsByIdentifier = nil;
+    assetLibraries = nil;
     format = nil;
     uniqueArtboardSizes = nil;
     pageIds = nil;
