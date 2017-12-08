@@ -125,13 +125,18 @@ var onRun = function (context) {
                 continue;
             }
             
+            var libraryID = [assetLibrary libraryID];
+            if (!libraryID) {
+                continue;
+            }
+
             var url = [assetLibrary locationOnDisk];
             if (!url) {
                 continue;
             }
             
             assetLibraries.push({
-                id: [assetLibrary libraryID], 
+                id: libraryID,
                 path: [url path]
             });
         }
