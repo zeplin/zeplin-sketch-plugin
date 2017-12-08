@@ -136,7 +136,6 @@ var onRun = function (context) {
             }
             
             assetLibraries.push({
-                id: [assetLibrary libraryID], 
                 id: libraryID,
                 path: [url path]
             });
