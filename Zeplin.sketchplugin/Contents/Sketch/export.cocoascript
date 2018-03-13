@@ -147,6 +147,16 @@ var onRun = function (context) {
         log("Asset library paths by identifier failed with error “" + error + "”.");
     }
     
+    var artboardNamesByIdentifier = {};
+    var allArtboardsLoop = [[doc valueForKeyPath:@"pages.@distinctUnionOfArrays.artboards"] objectEnumerator];
+    var artboard = nil;
+    while (artboard = [allArtboardsLoop nextObject]) {
+        artboardNamesByIdentifier[artboard.objectID()] = artboard.name();
+    }
+
+    artboard = nil;
+    allArtboardsLoop = nil;
+    
     var name = [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"zpl"];
     var temporaryDirectory = NSTemporaryDirectory();
     var path = [temporaryDirectory stringByAppendingPathComponent:name];
@@ -165,6 +175,7 @@ var onRun = function (context) {
     [directives setObject:format forKey:@"format"];
     [directives setObject:uniqueArtboardSizes forKey:@"artboardSizes"];
     [directives setObject:assetLibraries forKey:@"assetLibraries"];
+    [directives setObject:artboardNamesByIdentifier forKey:@"artboardNames"];
     if (version) {
         [directives setObject:version forKey:@"version"];
     }
@@ -178,6 +189,7 @@ var onRun = function (context) {
     version = nil;
     sketchmigratePath = nil;
     sketchtoolPath = nil;
+    artboardNames = nil;
     assetLibraries = nil;
     format = nil;
     uniqueArtboardSizes = nil;
