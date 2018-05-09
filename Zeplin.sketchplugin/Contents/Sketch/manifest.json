@@ -6,6 +6,7 @@
     "homepage": "https://zeplin.io",
     "version": "1.6.4",
     "identifier": "io.zeplin.sketch-plugin",
+    "icon": "Icons/icZeplin.png",
     "commands": [{
         "name": "Export Selected Artboards…",
         "identifier": "export",
