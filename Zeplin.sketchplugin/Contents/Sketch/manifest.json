@@ -12,7 +12,7 @@
         "identifier": "export",
         "shortcut": "cmd ctrl e",
         "script": "export.cocoascript",
-        "icon": "Icons/icZeplin.png",
+        "icon": "Icons/icZeplinRunner.png",
         "description": "Export selected artboards and symbols to a Zeplin project. 🚀"
     }, {
         "name": "Exclude Sublayers",
@@ -20,7 +20,7 @@
         "shortcut": "cmd shift x",
         "script": "utils.cocoascript",
         "handler": "excludeSublayers",
-        "icon": "Icons/icZeplin.png",
+        "icon": "Icons/icZeplinRunner.png",
         "description": "Exclude sublayers of selected groups or symbols."
     }, {
         "name": "Include Sublayers",
@@ -28,7 +28,7 @@
         "shortcut": "cmd shift i",
         "script": "utils.cocoascript",
         "handler": "includeSublayers",
-        "icon": "Icons/icZeplin.png",
+        "icon": "Icons/icZeplinRunner.png",
         "description": "Include sublayers of selected groups or symbols."
     }, {
         "name": "Shortcut Help",
@@ -36,7 +36,7 @@
         "shortcut": "cmd e",
         "script": "export.cocoascript",
         "handler": "shortcutHelp",
-        "icon": "Icons/icZeplin.png",
+        "icon": "Icons/icZeplinRunner.png",
         "description": "Learn more about “Export Selected…” shortcut change."
     }],
     "menu": {
