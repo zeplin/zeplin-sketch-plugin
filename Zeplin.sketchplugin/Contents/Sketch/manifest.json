@@ -1,25 +1,26 @@
 {
     "name": "Zeplin",
-    "description": "Export artboards to a Zeplin project. 🚀",
+    "description": "Export artboards and symbols to a Zeplin project. 🚀",
     "author": "Zeplin, Inc.",
     "authorEmail": "dev@zeplin.io",
     "homepage": "https://zeplin.io",
-    "version": "1.6.4",
+    "version": "1.6.5",
     "identifier": "io.zeplin.sketch-plugin",
+    "icon": "Icons/icZeplin.png",
     "commands": [{
-        "name": "Export Selected Artboards…",
+        "name": "Export Selected…",
         "identifier": "export",
         "shortcut": "cmd ctrl e",
         "script": "export.cocoascript",
-        "icon": "Icons/icZeplin.png",
-        "description": "Export selected artboards to a Zeplin project. 🚀"
+        "icon": "Icons/icZeplinRunner.png",
+        "description": "Export selected artboards and symbols to a Zeplin project. 🚀"
     }, {
         "name": "Exclude Sublayers",
         "identifier": "exclude-sublayers",
         "shortcut": "cmd shift x",
         "script": "utils.cocoascript",
         "handler": "excludeSublayers",
-        "icon": "Icons/icZeplin.png",
+        "icon": "Icons/icZeplinRunner.png",
         "description": "Exclude sublayers of selected groups or symbols."
     }, {
         "name": "Include Sublayers",
@@ -27,7 +28,7 @@
         "shortcut": "cmd shift i",
         "script": "utils.cocoascript",
         "handler": "includeSublayers",
-        "icon": "Icons/icZeplin.png",
+        "icon": "Icons/icZeplinRunner.png",
         "description": "Include sublayers of selected groups or symbols."
     }, {
         "name": "Shortcut Help",
@@ -35,8 +36,8 @@
         "shortcut": "cmd e",
         "script": "export.cocoascript",
         "handler": "shortcutHelp",
-        "icon": "Icons/icZeplin.png",
-        "description": "Learn more about “Export Selected Artboards…” shortcut change."
+        "icon": "Icons/icZeplinRunner.png",
+        "description": "Learn more about “Export Selected…” shortcut change."
     }],
     "menu": {
         "items": [
