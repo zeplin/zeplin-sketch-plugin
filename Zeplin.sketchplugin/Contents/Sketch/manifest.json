@@ -1,6 +1,6 @@
 {
     "name": "Zeplin",
-    "description": "Export artboards to a Zeplin project. 🚀",
+    "description": "Export artboards and symbols to a Zeplin project. 🚀",
     "author": "Zeplin, Inc.",
     "authorEmail": "dev@zeplin.io",
     "homepage": "https://zeplin.io",
@@ -8,12 +8,12 @@
     "identifier": "io.zeplin.sketch-plugin",
     "icon": "Icons/icZeplin.png",
     "commands": [{
-        "name": "Export Selected Artboards…",
+        "name": "Export Selected…",
         "identifier": "export",
         "shortcut": "cmd ctrl e",
         "script": "export.cocoascript",
         "icon": "Icons/icZeplin.png",
-        "description": "Export selected artboards to a Zeplin project. 🚀"
+        "description": "Export selected artboards and symbols to a Zeplin project. 🚀"
     }, {
         "name": "Exclude Sublayers",
         "identifier": "exclude-sublayers",
@@ -37,7 +37,7 @@
         "script": "export.cocoascript",
         "handler": "shortcutHelp",
         "icon": "Icons/icZeplin.png",
-        "description": "Learn more about “Export Selected Artboards…” shortcut change."
+        "description": "Learn more about “Export Selected…” shortcut change."
     }],
     "menu": {
         "items": [
