@@ -69,6 +69,7 @@ var onRun = function (context) {
     
     layers = nil;
 
+    var containsArtboard = false;
     var uniqueArtboardSizes = [];
     // `size` on `CGRect` fails on Mocha, on macOS 10.13, Sketch 45 and below.
     try {
@@ -76,6 +77,11 @@ var onRun = function (context) {
         var artboard = nil;
         while (artboard = [loop nextObject]) {
             var artboardSize = artboard.rect().size;
+
+            var artboardClassName = NSStringFromClass([artboard class]);
+            if ([artboardClassName isEqualToString:@"MSArtboardGroup"]) {
+                containsArtboard = true;
+            }
         
             var isUnique = true;
             for (var k = 0; k < uniqueArtboardSizes.length; k++) {
@@ -176,6 +182,7 @@ var onRun = function (context) {
     [directives setObject:uniqueArtboardSizes forKey:@"artboardSizes"];
     [directives setObject:assetLibraries forKey:@"assetLibraries"];
     [directives setObject:artboardNamesByIdentifier forKey:@"artboardNames"];
+    [directives setObject:containsArtboard forKey:@"containsArtboard"];
     if (version) {
         [directives setObject:version forKey:@"version"];
     }
