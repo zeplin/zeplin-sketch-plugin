@@ -70,21 +70,19 @@ var onRun = function (context) {
     layers = nil;
 
     var containsArtboard = false;
-    try {
-        var loop = [artboards objectEnumerator];
-        var artboard = nil;
-        while (artboard = [loop nextObject]) {
-            var artboardClassName = NSStringFromClass([artboard class]);
-            if ([artboardClassName isEqualToString:@"MSArtboardGroup"]) {
-                containsArtboard = true;
-            }
+    var artboardsLoop = [artboards objectEnumerator];
+    var artboard = nil;
+    while (artboard = [artboardsLoop nextObject]) {
+        var artboardClassName = NSStringFromClass([artboard class]);
+        if ([artboardClassName isEqualToString:@"MSArtboardGroup"]) {
+            containsArtboard = true;
+            
+            break;
         }
-
-        artboard = nil;
-        loop = nil;
-    } catch (error) {
-        log("Contains artboard failed with error “" + error + "”.");
     }
+
+    artboard = nil;
+    artboardsLoop = nil;
 
     var uniqueArtboardSizes = [];
     // `size` on `CGRect` fails on Mocha, on macOS 10.13, Sketch 45 and below.
