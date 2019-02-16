@@ -4,7 +4,7 @@
     "author": "Zeplin, Inc.",
     "authorEmail": "dev@zeplin.io",
     "homepage": "https://zeplin.io",
-    "version": "1.6.5",
+    "version": "1.7",
     "identifier": "io.zeplin.sketch-plugin",
     "icon": "Icons/icZeplin.png",
     "commands": [{
