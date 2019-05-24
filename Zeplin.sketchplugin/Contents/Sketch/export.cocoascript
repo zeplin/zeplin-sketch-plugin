@@ -1,28 +1,8 @@
 var onRun = function (context) {
     var doc = context.document;
     
-    if (![doc fileURL] || [doc isDraft]) {
-        [NSApp displayDialog:@"Please save the document before exporting to Zeplin." withTitle:@"Document not saved"];
+    if (!documentExportable(context)) {
         return;
-    }
-    
-    if ([doc isDocumentEdited]) {
-        var alert = [NSAlert alertWithMessageText:@"Document not saved" defaultButton:@"Save and Continue" alternateButton:@"Cancel" otherButton:@"Continue" informativeTextWithFormat:@"To capture the latest changes in this Sketch document, Zeplin needs to save it first.\n\n☝️ This might take a bit, depending on the document size."];
-        
-        var response = [alert runModal];
-        if (response == NSAlertDefaultReturn) {
-            [doc showMessage:@"Saving document…"];
-            
-            [doc saveDocument:nil];
-            while ([doc isDocumentEdited]) {
-                [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
-            }
-        } else if (response == NSAlertAlternateReturn) {
-            return;
-        }
-        
-        response = nil;
-        alert = nil;
     }
     
     var foreignSymbolsUpToDate = true;
@@ -120,6 +100,120 @@ var onRun = function (context) {
     
     artboards = nil;
 
+    var artboardNamesByIdentifier = {};
+    var allArtboardsLoop = [[doc valueForKeyPath:@"pages.@distinctUnionOfArrays.artboards"] objectEnumerator];
+    var artboard = nil;
+    while (artboard = [allArtboardsLoop nextObject]) {
+        artboardNamesByIdentifier[artboard.objectID()] = artboard.name();
+    }
+
+    artboard = nil;
+    allArtboardsLoop = nil;
+    
+    var path = temporaryPath();
+    var directives = defaultDirectives(context, path);
+    [directives setObject:@"artboards" forKey:@"type"];
+    [directives setObject:artboardIds forKey:@"artboardIds"];
+    [directives setObject:pageIds forKey:@"pageIds"];
+    [directives setObject:uniqueArtboardSizes forKey:@"artboardSizes"];
+    [directives setObject:artboardNamesByIdentifier forKey:@"artboardNames"];
+    [directives setObject:containsArtboard forKey:@"containsArtboard"];
+
+    artboardIds = nil;
+    pageIds = nil;
+    uniqueArtboardSizes = nil;
+    artboardNamesByIdentifier = nil;
+    
+    writeDirectives(directives, path);
+
+    directives = nil;
+
+    launchZeplin(context, path);
+
+    path = nil;
+}
+
+var exportColors = function (context) {
+    if (!documentExportable(context)) {
+        return;
+    }
+
+    var path = temporaryPath();
+    var directives = defaultDirectives(context, path);
+    [directives setObject:@"colors" forKey:@"type"];
+
+    writeDirectives(directives, path);
+
+    directives = nil;
+
+    launchZeplin(context, path);
+
+    path = nil;
+}
+
+var exportTextStyles = function (context) {
+    if (!documentExportable(context)) {
+        return;
+    }
+
+    var path = temporaryPath();
+    var directives = defaultDirectives(context, path);
+    [directives setObject:@"textStyles" forKey:@"type"];
+
+    writeDirectives(directives, path);
+
+    directives = nil;
+
+    launchZeplin(context, path);
+
+    path = nil;
+}
+
+var documentExportable = function (context) {
+    var doc = context.document;
+    
+    if (![doc fileURL] || [doc isDraft]) {
+        [NSApp displayDialog:@"Please save the document before exporting to Zeplin." withTitle:@"Document not saved"];
+
+        return false;
+    }
+    
+    if ([doc isDocumentEdited]) {
+        var alert = [NSAlert alertWithMessageText:@"Document not saved" defaultButton:@"Save and Continue" alternateButton:@"Cancel" otherButton:@"Continue" informativeTextWithFormat:@"To capture the latest changes in this Sketch document, Zeplin needs to save it first.\n\n☝️ This might take a bit, depending on the document size."];
+        
+        var response = [alert runModal];
+        if (response == NSAlertDefaultReturn) {
+            [doc showMessage:@"Saving document…"];
+            
+            [doc saveDocument:nil];
+            while ([doc isDocumentEdited]) {
+                [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
+            }
+        } else if (response == NSAlertAlternateReturn) {
+            return false;
+        }
+        
+        response = nil;
+        alert = nil;
+    }
+
+    return true;
+}
+
+var temporaryPath = function() {
+    var name = [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"zpl"];
+    var temporaryDirectory = NSTemporaryDirectory();
+    var path = [temporaryDirectory stringByAppendingPathComponent:name];
+
+    temporaryDirectory = nil;
+    name = nil;
+
+    return path;
+}
+
+var defaultDirectives = function(context, path) {
+    var doc = context.document;
+
     var format = @"json";
     var readerClass = NSClassFromString(@"MSDocumentReader");
     var jsonReaderClass = NSClassFromString(@"MSDocumentZippedJSONReader");
@@ -129,8 +223,8 @@ var onRun = function (context) {
 
     jsonReaderClass = nil;
     readerClass = nil;
-    
-    var assetLibraries = [];
+
+     var assetLibraries = [];
     // `MSAssetLibraryController` defined on Sketch 47.
     try {
         var assetLibrariesLoop = [[[[AppController sharedInstance] librariesController] libraries] objectEnumerator];
@@ -161,37 +255,15 @@ var onRun = function (context) {
     } catch (error) {
         log("Asset library paths by identifier failed with error “" + error + "”.");
     }
-    
-    var artboardNamesByIdentifier = {};
-    var allArtboardsLoop = [[doc valueForKeyPath:@"pages.@distinctUnionOfArrays.artboards"] objectEnumerator];
-    var artboard = nil;
-    while (artboard = [allArtboardsLoop nextObject]) {
-        artboardNamesByIdentifier[artboard.objectID()] = artboard.name();
-    }
 
-    artboard = nil;
-    allArtboardsLoop = nil;
-    
-    var name = [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"zpl"];
-    var temporaryDirectory = NSTemporaryDirectory();
-    var path = [temporaryDirectory stringByAppendingPathComponent:name];
-    
-    temporaryDirectory = nil;
-    name = nil;
-    
     var version = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
     var sketchtoolPath = [[NSBundle mainBundle] pathForResource:@"sketchtool" ofType:nil inDirectory:@"sketchtool/bin"];
     var sketchmigratePath = [[NSBundle mainBundle] pathForResource:@"sketchmigrate" ofType:nil inDirectory:@"sketchtool/bin"];
-    
+
     var directives = [NSMutableDictionary dictionary];
     [directives setObject:[[doc fileURL] path] forKey:@"path"];
-    [directives setObject:artboardIds forKey:@"artboardIds"];
-    [directives setObject:pageIds forKey:@"pageIds"];
     [directives setObject:format forKey:@"format"];
-    [directives setObject:uniqueArtboardSizes forKey:@"artboardSizes"];
     [directives setObject:assetLibraries forKey:@"assetLibraries"];
-    [directives setObject:artboardNamesByIdentifier forKey:@"artboardNames"];
-    [directives setObject:containsArtboard forKey:@"containsArtboard"];
     if (version) {
         [directives setObject:version forKey:@"version"];
     }
@@ -201,35 +273,43 @@ var onRun = function (context) {
     if (sketchmigratePath) {
         [directives setObject:sketchmigratePath forKey:@"sketchmigratePath"];
     }
-    
+
+    format = nil;
     version = nil;
     sketchmigratePath = nil;
     sketchtoolPath = nil;
-    artboardNames = nil;
     assetLibraries = nil;
-    format = nil;
-    uniqueArtboardSizes = nil;
-    pageIds = nil;
-    artboardIds = nil;
-    
+
+    return directives
+}
+
+var writeDirectives = function (directives, path) {
+    if (!path) {
+        return nil;
+    }
+
     [directives writeToFile:path atomically:false];
-    directives = nil;
-    
+
+    return path;
+}
+
+var launchZeplin = function (context, path) {
+    var doc = context.document;
     var workspace = [NSWorkspace sharedWorkspace];
     
     var applicationPath = [workspace absolutePathForAppBundleWithIdentifier:@"io.zeplin.osx"];
     if (!applicationPath) {
         [NSApp displayDialog:@"Please make sure that you installed and launched it: https://zpl.io/download" withTitle:"Could not find Zeplin"];
+
         return;
     }
     
     [doc showMessage:@"Launching Zeplin!"];
     
     [workspace openFile:path withApplication:applicationPath andDeactivate:true];
-    
+
     workspace = nil;
     applicationPath = nil;
-    path = nil;
 }
 
 var shortcutHelp = function (context) {
