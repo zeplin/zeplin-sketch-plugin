@@ -27,7 +27,7 @@
         "script": "export.cocoascript",
         "handler": "exportTextStyles",
         "icon": "Icons/icZeplinRunner.png",
-        "description": "Export text styles to Zeplin. 🚀"
+        "description": "Export text styles to Zeplin."
     }, {
         "name": "Exclude Sublayers",
         "identifier": "exclude-sublayers",

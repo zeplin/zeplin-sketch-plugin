@@ -224,7 +224,7 @@ var defaultDirectives = function(context, path) {
     jsonReaderClass = nil;
     readerClass = nil;
 
-     var assetLibraries = [];
+    var assetLibraries = [];
     // `MSAssetLibraryController` defined on Sketch 47.
     try {
         var assetLibrariesLoop = [[[[AppController sharedInstance] librariesController] libraries] objectEnumerator];
@@ -280,7 +280,7 @@ var defaultDirectives = function(context, path) {
     sketchtoolPath = nil;
     assetLibraries = nil;
 
-    return directives
+    return directives;
 }
 
 var writeDirectives = function (directives, path) {
