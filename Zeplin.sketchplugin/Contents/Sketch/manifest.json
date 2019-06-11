@@ -1,6 +1,6 @@
 {
     "name": "Zeplin",
-    "description": "Export artboards and symbols to a Zeplin project. 🚀",
+    "description": "Export artboards, symbols, colors and text styles to Zeplin. 🚀",
     "author": "Zeplin, Inc.",
     "authorEmail": "dev@zeplin.io",
     "homepage": "https://zeplin.io",
@@ -13,7 +13,21 @@
         "shortcut": "cmd ctrl e",
         "script": "export.cocoascript",
         "icon": "Icons/icZeplinRunner.png",
-        "description": "Export selected artboards and symbols to a Zeplin project. 🚀"
+        "description": "Export selected artboards and symbols to Zeplin."
+    }, {
+        "name": "Export Colors…",
+        "identifier": "exportColors",
+        "script": "export.cocoascript",
+        "handler": "exportColors",
+        "icon": "Icons/icZeplinRunner.png",
+        "description": "Export colors to Zeplin."
+    }, {
+        "name": "Export Text Styles…",
+        "identifier": "exportTextStyles",
+        "script": "export.cocoascript",
+        "handler": "exportTextStyles",
+        "icon": "Icons/icZeplinRunner.png",
+        "description": "Export text styles to Zeplin."
     }, {
         "name": "Exclude Sublayers",
         "identifier": "exclude-sublayers",
@@ -42,6 +56,8 @@
     "menu": {
         "items": [
             "export",
+            "exportColors",
+            "exportTextStyles",
             {
                 "title": "Utilities",
                 "items": [
