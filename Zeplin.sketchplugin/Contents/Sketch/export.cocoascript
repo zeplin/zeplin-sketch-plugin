@@ -138,6 +138,22 @@ var exportColors = function (context) {
         return;
     }
 
+    var assets = context.document.documentData().assets();
+    var colors;
+
+    // `colors` is deprecated at Sketch version 53+
+    if (assets.colors) {
+        colors = assets.colors();
+    } else {
+        colors = assets.colorAssets();
+    }
+
+    if (!colors || !colors.length) {
+      [NSApp displayDialog:@"No colors found in document" withTitle:@"Cannot export colors"];
+
+      return;
+    }
+
     var path = temporaryPath();
     var directives = defaultDirectives(context, path);
     [directives setObject:@"colors" forKey:@"type"];
@@ -154,6 +170,14 @@ var exportColors = function (context) {
 var exportTextStyles = function (context) {
     if (!documentExportable(context)) {
         return;
+    }
+
+    var textStyles = context.document.documentData().layerTextStyles().sharedStyles();
+
+    if (!textStyles || !textStyles.length) {
+      [NSApp displayDialog:@"No text styles found in document" withTitle:@"Cannot export text styles"];
+
+      return;
     }
 
     var path = temporaryPath();
