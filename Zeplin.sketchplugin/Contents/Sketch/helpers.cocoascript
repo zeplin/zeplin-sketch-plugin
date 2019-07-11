@@ -141,3 +141,97 @@ var launchZeplin = function (context, path) {
     applicationPath = nil;
 }
 
+var exportArtboards = function (context, artboards) {
+    var doc = context.document;
+
+    var artboardIds = [artboards valueForKeyPath:@"objectID"];
+
+    var layers = [[[doc documentData] allSymbols] arrayByAddingObjectsFromArray:artboards];
+    var pageIds = [layers valueForKeyPath:@"@distinctUnionOfObjects.parentPage.objectID"];
+    
+    layers = nil;
+
+    var containsArtboard = false;
+    var artboardsLoop = [artboards objectEnumerator];
+    var artboard = nil;
+    while (artboard = [artboardsLoop nextObject]) {
+        var artboardClassName = NSStringFromClass([artboard class]);
+        if ([artboardClassName isEqualToString:@"MSArtboardGroup"]) {
+            containsArtboard = true;
+            
+            break;
+        }
+    }
+
+    artboard = nil;
+    artboardsLoop = nil;
+
+    var uniqueArtboardSizes = [];
+    // `size` on `CGRect` fails on Mocha, on macOS 10.13, Sketch 45 and below.
+    try {
+        var loop = [artboards objectEnumerator];
+        var artboard = nil;
+        while (artboard = [loop nextObject]) {
+            var artboardSize = artboard.rect().size;
+        
+            var isUnique = true;
+            for (var k = 0; k < uniqueArtboardSizes.length; k++) {
+                if (uniqueArtboardSizes[k].width == artboardSize.width && uniqueArtboardSizes[k].height == artboardSize.height) {
+                    isUnique = false;
+        
+                    break;
+                }
+            }
+        
+            if (isUnique) {
+                uniqueArtboardSizes.push({
+                    width: artboardSize.width, 
+                    height: artboardSize.height
+                });
+            }
+            
+            artboardSize = nil;
+            isUnique = nil;
+        }
+        
+        artboard = nil;
+        loop = nil;
+    } catch (error) {
+        log("Unique artboard sizes failed with error “" + error + "”.");
+    }
+    
+    artboards = nil;
+
+    var artboardNamesByIdentifier = {};
+    var allArtboardsLoop = [[doc valueForKeyPath:@"pages.@distinctUnionOfArrays.artboards"] objectEnumerator];
+    var artboard = nil;
+    while (artboard = [allArtboardsLoop nextObject]) {
+        artboardNamesByIdentifier[artboard.objectID()] = artboard.name();
+    }
+
+    artboard = nil;
+    allArtboardsLoop = nil;
+    
+    var path = temporaryPath();
+    var directives = defaultDirectives(context, path);
+    [directives setObject:@"artboards" forKey:@"type"];
+    [directives setObject:artboardIds forKey:@"artboardIds"];
+    [directives setObject:pageIds forKey:@"pageIds"];
+    [directives setObject:uniqueArtboardSizes forKey:@"artboardSizes"];
+    [directives setObject:artboardNamesByIdentifier forKey:@"artboardNames"];
+    [directives setObject:containsArtboard forKey:@"containsArtboard"];
+
+    artboardIds = nil;
+    pageIds = nil;
+    uniqueArtboardSizes = nil;
+    artboardNamesByIdentifier = nil;
+    
+    writeDirectives(directives, path);
+
+    directives = nil;
+
+    launchZeplin(context, path);
+
+    path = nil;
+}
+
