@@ -29,6 +29,34 @@
         "icon": "Icons/icZeplinRunner.png",
         "description": "Export text styles to Zeplin."
     }, {
+        "name": "Artboards from Current Page…",
+        "identifier": "artboardsFromCurrentPage",
+        "script": "export.cocoascript",
+        "handler": "exportArtboardsFromCurrentPage",
+        "icon": "Icons/icZeplinRunner.png",
+        "description": "Export artboards from current page to Zeplin."
+    }, {
+        "name": "Artboards from All Pages…",
+        "identifier": "artboardsFromAllPages",
+        "script": "export.cocoascript",
+        "handler": "exportArtboardsFromAllPages",
+        "icon": "Icons/icZeplinRunner.png",
+        "description": "Export artboards from all pages to Zeplin."
+    }, {
+        "name": "Symbols from Current Page…",
+        "identifier": "symbolsFromCurrentPage",
+        "script": "export.cocoascript",
+        "handler": "exportSymbolsFromCurrentPage",
+        "icon": "Icons/icZeplinRunner.png",
+        "description": "Export symbols from current page to Zeplin."
+    }, {
+        "name": "Symbols from All Pages…",
+        "identifier": "symbolsFromAllPages",
+        "script": "export.cocoascript",
+        "handler": "exportSymbolsFromAllPages",
+        "icon": "Icons/icZeplinRunner.png",
+        "description": "Export symbols from all pages to Zeplin."
+    }, {
         "name": "Exclude Sublayers",
         "identifier": "exclude-sublayers",
         "shortcut": "cmd shift x",
@@ -56,8 +84,20 @@
     "menu": {
         "items": [
             "export",
+            "-",
             "exportColors",
             "exportTextStyles",
+            {
+                "title": "Export All",
+                "items": [
+                    "artboardsFromCurrentPage",
+                    "artboardsFromAllPages",
+                    "-",
+                    "symbolsFromCurrentPage",
+                    "symbolsFromAllPages"
+                ]
+            },
+            "-",
             {
                 "title": "Utilities",
                 "items": [
