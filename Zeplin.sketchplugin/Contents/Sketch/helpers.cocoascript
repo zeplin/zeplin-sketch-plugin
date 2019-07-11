@@ -235,3 +235,26 @@ var exportArtboards = function (context, artboards) {
     path = nil;
 }
 
+var layersOfPagesWithClassName = function (pages, className) {
+    var layers = [];
+    var pagesLoop = pages.objectEnumerator();
+    var page = nil;
+
+    while (page = [pagesLoop nextObject]) {            
+        var pageLayers = [];
+        var layersLoop = page.layers().objectEnumerator();
+        var layer = nil;
+
+        while (layer = [layersLoop nextObject]) {            
+            var layerClassName = NSStringFromClass([layer class]);
+
+            if ([layerClassName isEqualToString:className]) {
+                pageLayers.push(layer);
+            }
+        }
+
+        layers = layers.concat(pageLayers);
+    }    
+    
+    return NSArray.arrayWithArray(layers);
+}

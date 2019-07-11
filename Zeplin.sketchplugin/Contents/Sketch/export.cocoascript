@@ -82,3 +82,43 @@ var exportTextStyles = function (context) {
 
     path = nil;
 }
+
+var exportArtboardsFromCurrentPage = function (context) {
+    if (!documentExportable(context)) {
+        return;
+    }
+
+    var artboards = layersOfPagesWithClassName(NSArray.arrayWithObject(context.document.currentPage()), "MSArtboardGroup");
+
+    exportArtboards(context, artboards);
+}
+
+var exportArtboardsFromAllPages = function (context) {
+    if (!documentExportable(context)) {
+        return;
+    }
+
+    var artboards = layersOfPagesWithClassName(context.document.pages(), "MSArtboardGroup");
+
+    exportArtboards(context, artboards);
+}
+
+var exportSymbolsFromCurrentPage = function (context) {
+    if (!documentExportable(context)) {
+        return;
+    }
+
+    var artboards = layersOfPagesWithClassName(NSArray.arrayWithObject(context.document.currentPage()), "MSSymbolMaster");
+
+    exportArtboards(context, artboards);
+}
+
+var exportSymbolsFromAllPages = function (context) {
+    if (!documentExportable(context)) {
+        return;
+    }
+
+    var artboards = layersOfPagesWithClassName(context.document.pages(), "MSSymbolMaster");
+
+    exportArtboards(context, artboards);
+}
