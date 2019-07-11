@@ -48,7 +48,7 @@
         "name": "Shortcut Help",
         "identifier": "shortcut-help",
         "shortcut": "cmd e",
-        "script": "export.cocoascript",
+        "script": "utils.cocoascript",
         "handler": "shortcutHelp",
         "icon": "Icons/icZeplinRunner.png",
         "description": "Learn more about “Export Selected…” shortcut change."
