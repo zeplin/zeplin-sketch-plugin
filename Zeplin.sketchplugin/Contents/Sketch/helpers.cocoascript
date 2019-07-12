@@ -235,6 +235,20 @@ var exportArtboards = function (context, artboards) {
     path = nil;
 }
 
+var exportObjectsForType = function (context, type) {
+    var path = temporaryPath();
+    var directives = defaultDirectives(context, path);
+    [directives setObject:type forKey:@"type"];
+
+    writeDirectives(directives, path);
+
+    directives = nil;
+
+    launchZeplin(context, path);
+
+    path = nil;
+}
+
 var layersOfPagesWithClassName = function (pages, className) {
     var layers = [];
     var pagesLoop = pages.objectEnumerator();

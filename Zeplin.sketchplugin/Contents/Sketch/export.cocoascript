@@ -52,17 +52,7 @@ var exportColors = function (context) {
         return;
     }
 
-    var path = temporaryPath();
-    var directives = defaultDirectives(context, path);
-    [directives setObject:@"colors" forKey:@"type"];
-
-    writeDirectives(directives, path);
-
-    directives = nil;
-
-    launchZeplin(context, path);
-
-    path = nil;
+    exportObjectsForType(context, @"colors");
 }
 
 var exportTextStyles = function (context) {
@@ -70,17 +60,7 @@ var exportTextStyles = function (context) {
         return;
     }
 
-    var path = temporaryPath();
-    var directives = defaultDirectives(context, path);
-    [directives setObject:@"textStyles" forKey:@"type"];
-
-    writeDirectives(directives, path);
-
-    directives = nil;
-
-    launchZeplin(context, path);
-
-    path = nil;
+    exportObjectsForType(context, @"textStyles");
 }
 
 var exportArtboardsFromCurrentPage = function (context) {
