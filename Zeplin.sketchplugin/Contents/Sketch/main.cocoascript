@@ -1,4 +1,4 @@
-@import "helpers.cocoascript";
+@import "utils.cocoascript";
 
 var onRun = function (context) {
     if (!documentExportable(context)) {
@@ -92,4 +92,44 @@ var exportSymbolsFromAllPages = function (context) {
     }
 
     exportArtboards(context, artboards);
+}
+
+var excludeSublayers = function (context) {
+    var selection = context.selection;
+    var layerEnumerator = [selection objectEnumerator];
+    var layer;
+    
+    while (layer = [layerEnumerator nextObject]) {
+        var layerName = [layer name];
+        
+        if (![layerName hasPrefix:@"-g-"]) {
+            [layer setName:[@"-g-" stringByAppendingString:layerName]];
+        }
+        
+        layerName = nil;
+    }
+    
+    layer = nil;
+    layerEnumerator = nil;
+    selection = nil;
+}
+
+var includeSublayers = function (context) {
+    var selection = context.selection;
+    var layerEnumerator = [selection objectEnumerator];
+    var layer;
+    
+    while (layer = [layerEnumerator nextObject]) {
+        var layerName = [layer name];
+        
+        if ([layerName hasPrefix:@"-g-"]) {
+            [layer setName:[layerName substringFromIndex:3]];
+        }
+        
+        layerName = nil;
+    }
+    
+    layer = nil;
+    layerEnumerator = nil;
+    selection = nil;
 }
