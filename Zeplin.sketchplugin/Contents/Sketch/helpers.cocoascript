@@ -144,6 +144,37 @@ var launchZeplin = function (context, path) {
 var exportArtboards = function (context, artboards) {
     var doc = context.document;
 
+    var foreignSymbolsUpToDate = true;
+    // `MSBadgeController` is defined on Sketch 44, `activeWindowBadgingActions` is defined on Sketch 46.
+    try {
+        var activeActions = [[doc badgeController] activeWindowBadgingActions];
+        var activeActionsLoop = [activeActions objectEnumerator];
+        var action = nil;
+        while (action = [activeActionsLoop nextObject]) {
+            if ([action isKindOfClass:NSClassFromString(@"MSSyncLibraryAction")]) {
+                foreignSymbolsUpToDate = false;
+                
+                break;
+            }
+        }
+        
+        action = nil;
+        activeActionsLoop = nil;
+        activeActions = nil;
+    } catch (error) {
+        log("Foreign symbols up to date failed with error “" + error + "”.");
+    }
+    
+    if (!foreignSymbolsUpToDate) {
+        var alert = [NSAlert alertWithMessageText:@"Symbols not up to date" defaultButton:@"Continue and Export" alternateButton:@"Cancel" otherButton:nil informativeTextWithFormat:@"To capture the latest changes in your libraries, make sure that your symbols are up to date before exporting artboards to Zeplin.\n\n☝️ Select “Library Update Available” on the top right to review changes."];
+        
+        if ([alert runModal] == NSAlertAlternateReturn) {
+            return;
+        }
+        
+        alert = nil;
+    }
+
     var artboardIds = [artboards valueForKeyPath:@"objectID"];
 
     var layers = [[[doc documentData] allSymbols] arrayByAddingObjectsFromArray:artboards];
