@@ -72,14 +72,6 @@
         "handler": "includeSublayers",
         "icon": "Icons/icZeplinRunner.png",
         "description": "Include sublayers of selected groups or symbols."
-    }, {
-        "name": "Shortcut Help",
-        "identifier": "shortcut-help",
-        "shortcut": "cmd e",
-        "script": "utils.cocoascript",
-        "handler": "shortcutHelp",
-        "icon": "Icons/icZeplinRunner.png",
-        "description": "Learn more about “Export Selected…” shortcut change."
     }],
     "menu": {
         "items": [
@@ -102,9 +94,7 @@
                 "title": "Utilities",
                 "items": [
                     "exclude-sublayers",
-                    "include-sublayers",
-                    "-",
-                    "shortcut-help"
+                    "include-sublayers"                    
                 ]
             }
         ]
