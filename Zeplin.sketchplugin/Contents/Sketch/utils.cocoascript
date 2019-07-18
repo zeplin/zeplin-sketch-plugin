@@ -1,39 +1,305 @@
-var excludeSublayers = function (context) {
-    var selection = context.selection;
-    var layerEnumerator = [selection objectEnumerator];
-    var layer;
+var documentExportable = function (context) {
+    var doc = context.document;
     
-    while (layer = [layerEnumerator nextObject]) {
-        var layerName = [layer name];
-        
-        if (![layerName hasPrefix:@"-g-"]) {
-            [layer setName:[@"-g-" stringByAppendingString:layerName]];
-        }
-        
-        layerName = nil;
+    if (![doc fileURL] || [doc isDraft]) {
+        [NSApp displayDialog:@"Please save the document before exporting to Zeplin." withTitle:@"Document not saved"];
+
+        return false;
     }
     
-    layer = nil;
-    layerEnumerator = nil;
-    selection = nil;
+    if ([doc isDocumentEdited]) {
+        var alert = [NSAlert alertWithMessageText:@"Document not saved" defaultButton:@"Save and Continue" alternateButton:@"Cancel" otherButton:@"Continue" informativeTextWithFormat:@"To capture the latest changes in this Sketch document, Zeplin needs to save it first.\n\n☝️ This might take a bit, depending on the document size."];
+        
+        var response = [alert runModal];
+        if (response == NSAlertDefaultReturn) {
+            [doc showMessage:@"Saving document…"];
+            
+            [doc saveDocument:nil];
+            while ([doc isDocumentEdited]) {
+                [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
+            }
+        } else if (response == NSAlertAlternateReturn) {
+            return false;
+        }
+        
+        response = nil;
+        alert = nil;
+    }
+
+    return true;
 }
 
-var includeSublayers = function (context) {
-    var selection = context.selection;
-    var layerEnumerator = [selection objectEnumerator];
-    var layer;
-    
-    while (layer = [layerEnumerator nextObject]) {
-        var layerName = [layer name];
-        
-        if ([layerName hasPrefix:@"-g-"]) {
-            [layer setName:[layerName substringFromIndex:3]];
+var temporaryPath = function() {
+    var name = [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"zpl"];
+    var temporaryDirectory = NSTemporaryDirectory();
+    var path = [temporaryDirectory stringByAppendingPathComponent:name];
+
+    temporaryDirectory = nil;
+    name = nil;
+
+    return path;
+}
+
+var defaultDirectives = function(context, path) {
+    var doc = context.document;
+
+    var format = @"json";
+    var readerClass = NSClassFromString(@"MSDocumentReader");
+    var jsonReaderClass = NSClassFromString(@"MSDocumentZippedJSONReader");
+    if (!readerClass || !jsonReaderClass || ![[readerClass readerForDocumentAtURL:[doc fileURL]] isKindOfClass:jsonReaderClass]) {
+        format = @"legacy";
+    }
+
+    jsonReaderClass = nil;
+    readerClass = nil;
+
+    var assetLibraries = [];
+    // `MSAssetLibraryController` defined on Sketch 47.
+    try {
+        var assetLibrariesLoop = [[[[AppController sharedInstance] librariesController] libraries] objectEnumerator];
+        var assetLibrary = nil;
+        while (assetLibrary = [assetLibrariesLoop nextObject]) {
+            if (![assetLibrary enabled]) {
+                continue;
+            }
+            
+            var libraryID = [assetLibrary libraryID];
+            if (!libraryID) {
+                continue;
+            }
+
+            var url = [assetLibrary locationOnDisk];
+            if (!url) {
+                continue;
+            }
+            
+            assetLibraries.push({
+                id: libraryID,
+                path: [url path]
+            });
         }
         
-        layerName = nil;
+        assetLibrary = nil;
+        assetLibrariesLoop = nil;
+    } catch (error) {
+        log("Asset library paths by identifier failed with error “" + error + "”.");
+    }
+
+    var version = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+    var sketchtoolPath = [[NSBundle mainBundle] pathForResource:@"sketchtool" ofType:nil inDirectory:@"sketchtool/bin"];
+    var sketchmigratePath = [[NSBundle mainBundle] pathForResource:@"sketchmigrate" ofType:nil inDirectory:@"sketchtool/bin"];
+
+    var directives = [NSMutableDictionary dictionary];
+    [directives setObject:[[doc fileURL] path] forKey:@"path"];
+    [directives setObject:format forKey:@"format"];
+    [directives setObject:assetLibraries forKey:@"assetLibraries"];
+    if (version) {
+        [directives setObject:version forKey:@"version"];
+    }
+    if (sketchtoolPath) {
+        [directives setObject:sketchtoolPath forKey:@"sketchtoolPath"];
+    }
+    if (sketchmigratePath) {
+        [directives setObject:sketchmigratePath forKey:@"sketchmigratePath"];
+    }
+
+    format = nil;
+    version = nil;
+    sketchmigratePath = nil;
+    sketchtoolPath = nil;
+    assetLibraries = nil;
+
+    return directives;
+}
+
+var writeDirectives = function (directives, path) {
+    if (!path) {
+        return nil;
+    }
+
+    [directives writeToFile:path atomically:false];
+
+    return path;
+}
+
+var launchZeplin = function (context, path) {
+    var doc = context.document;
+    var workspace = [NSWorkspace sharedWorkspace];
+    
+    var applicationPath = [workspace absolutePathForAppBundleWithIdentifier:@"io.zeplin.osx"];
+    if (!applicationPath) {
+        [NSApp displayDialog:@"Please make sure that you installed and launched it: https://zpl.io/download" withTitle:"Could not find Zeplin"];
+
+        return;
     }
     
-    layer = nil;
-    layerEnumerator = nil;
-    selection = nil;
+    [doc showMessage:@"Launching Zeplin!"];
+    
+    [workspace openFile:path withApplication:applicationPath andDeactivate:true];
+
+    workspace = nil;
+    applicationPath = nil;
+}
+
+var exportArtboards = function (context, artboards) {
+    var doc = context.document;
+
+    var foreignSymbolsUpToDate = true;
+    // `MSBadgeController` is defined on Sketch 44, `activeWindowBadgingActions` is defined on Sketch 46.
+    try {
+        var activeActions = [[doc badgeController] activeWindowBadgingActions];
+        var activeActionsLoop = [activeActions objectEnumerator];
+        var action = nil;
+        while (action = [activeActionsLoop nextObject]) {
+            if ([action isKindOfClass:NSClassFromString(@"MSSyncLibraryAction")]) {
+                foreignSymbolsUpToDate = false;
+                
+                break;
+            }
+        }
+        
+        action = nil;
+        activeActionsLoop = nil;
+        activeActions = nil;
+    } catch (error) {
+        log("Foreign symbols up to date failed with error “" + error + "”.");
+    }
+    
+    if (!foreignSymbolsUpToDate) {
+        var alert = [NSAlert alertWithMessageText:@"Symbols not up to date" defaultButton:@"Continue and Export" alternateButton:@"Cancel" otherButton:nil informativeTextWithFormat:@"To capture the latest changes in your libraries, make sure that your symbols are up to date before exporting artboards to Zeplin.\n\n☝️ Select “Library Update Available” on the top right to review changes."];
+        
+        if ([alert runModal] == NSAlertAlternateReturn) {
+            return;
+        }
+        
+        alert = nil;
+    }
+
+    var artboardIds = [artboards valueForKeyPath:@"objectID"];
+
+    var layers = [[[doc documentData] allSymbols] arrayByAddingObjectsFromArray:artboards];
+    var pageIds = [layers valueForKeyPath:@"@distinctUnionOfObjects.parentPage.objectID"];
+    
+    layers = nil;
+
+    var containsArtboard = false;
+    var artboardsLoop = [artboards objectEnumerator];
+    var artboard = nil;
+    while (artboard = [artboardsLoop nextObject]) {
+        var artboardClassName = NSStringFromClass([artboard class]);
+        if ([artboardClassName isEqualToString:@"MSArtboardGroup"]) {
+            containsArtboard = true;
+            
+            break;
+        }
+    }
+
+    artboard = nil;
+    artboardsLoop = nil;
+
+    var uniqueArtboardSizes = [];
+    // `size` on `CGRect` fails on Mocha, on macOS 10.13, Sketch 45 and below.
+    try {
+        var loop = [artboards objectEnumerator];
+        var artboard = nil;
+        while (artboard = [loop nextObject]) {
+            var artboardSize = artboard.rect().size;
+        
+            var isUnique = true;
+            for (var k = 0; k < uniqueArtboardSizes.length; k++) {
+                if (uniqueArtboardSizes[k].width == artboardSize.width && uniqueArtboardSizes[k].height == artboardSize.height) {
+                    isUnique = false;
+        
+                    break;
+                }
+            }
+        
+            if (isUnique) {
+                uniqueArtboardSizes.push({
+                    width: artboardSize.width, 
+                    height: artboardSize.height
+                });
+            }
+            
+            artboardSize = nil;
+            isUnique = nil;
+        }
+        
+        artboard = nil;
+        loop = nil;
+    } catch (error) {
+        log("Unique artboard sizes failed with error “" + error + "”.");
+    }
+    
+    artboards = nil;
+
+    var artboardNamesByIdentifier = {};
+    var allArtboardsLoop = [[doc valueForKeyPath:@"pages.@distinctUnionOfArrays.artboards"] objectEnumerator];
+    var artboard = nil;
+    while (artboard = [allArtboardsLoop nextObject]) {
+        artboardNamesByIdentifier[artboard.objectID()] = artboard.name();
+    }
+
+    artboard = nil;
+    allArtboardsLoop = nil;
+    
+    var path = temporaryPath();
+    var directives = defaultDirectives(context, path);
+    [directives setObject:@"artboards" forKey:@"type"];
+    [directives setObject:artboardIds forKey:@"artboardIds"];
+    [directives setObject:pageIds forKey:@"pageIds"];
+    [directives setObject:uniqueArtboardSizes forKey:@"artboardSizes"];
+    [directives setObject:artboardNamesByIdentifier forKey:@"artboardNames"];
+    [directives setObject:containsArtboard forKey:@"containsArtboard"];
+
+    artboardIds = nil;
+    pageIds = nil;
+    uniqueArtboardSizes = nil;
+    artboardNamesByIdentifier = nil;
+    
+    writeDirectives(directives, path);
+
+    directives = nil;
+
+    launchZeplin(context, path);
+
+    path = nil;
+}
+
+var exportObjectsForType = function (context, type) {
+    var path = temporaryPath();
+    var directives = defaultDirectives(context, path);
+    [directives setObject:type forKey:@"type"];
+
+    writeDirectives(directives, path);
+
+    directives = nil;
+
+    launchZeplin(context, path);
+
+    path = nil;
+}
+
+var layersOfPagesWithClassName = function (pages, className) {
+    var layers = [];
+    var pagesLoop = pages.objectEnumerator();
+    var page = nil;
+
+    while (page = [pagesLoop nextObject]) {            
+        var pageLayers = [];
+        var layersLoop = page.layers().objectEnumerator();
+        var layer = nil;
+
+        while (layer = [layersLoop nextObject]) {            
+            var layerClassName = NSStringFromClass([layer class]);
+
+            if ([layerClassName isEqualToString:className]) {
+                pageLayers.push(layer);
+            }
+        }
+
+        layers = layers.concat(pageLayers);
+    }    
+    
+    return NSArray.arrayWithArray(layers);
 }
