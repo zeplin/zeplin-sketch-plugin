@@ -1,35 +1,52 @@
-var documentExportable = function (context) {
-    var doc = context.document;
+var temporaryPath = function() {
+    var name = [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"sketch"];
+    var temporaryDirectory = NSTemporaryDirectory();
+    var temporaryZeplinDirectory = [temporaryDirectory stringByAppendingPathComponent:@"io.zeplin.osx"];
     
-    if (![doc fileURL] || [doc isDraft]) {
-        [NSApp displayDialog:@"Please save the document before exporting to Zeplin." withTitle:@"Document not saved"];
-
-        return false;
-    }
-    
-    if ([doc isDocumentEdited]) {
-        var alert = [NSAlert alertWithMessageText:@"Document not saved" defaultButton:@"Save and Continue" alternateButton:@"Cancel" otherButton:@"Continue" informativeTextWithFormat:@"To capture the latest changes in this Sketch document, Zeplin needs to save it first.\n\n☝️ This might take a bit, depending on the document size."];
-        
-        var response = [alert runModal];
-        if (response == NSAlertDefaultReturn) {
-            [doc showMessage:@"Saving document…"];
-            
-            [doc saveDocument:nil];
-            while ([doc isDocumentEdited]) {
-                [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
-            }
-        } else if (response == NSAlertAlternateReturn) {
-            return false;
-        }
-        
-        response = nil;
-        alert = nil;
+    var isDir = MOPointer.alloc().initWithValue_(false);
+    var fileManager = [NSFileManager defaultManager];
+    if (![fileManager fileExistsAtPath:temporaryZeplinDirectory isDirectory:isDir] || isDir.value() == false) {
+        [fileManager removeItemAtPath:temporaryZeplinDirectory error:nil];
+        [fileManager createDirectoryAtPath:temporaryZeplinDirectory withIntermediateDirectories:true attributes:nil error:nil];
     }
 
-    return true;
+    var path = [temporaryZeplinDirectory stringByAppendingPathComponent:name];
+
+    name = nil;
+    temporaryDirectory = nil;
+    temporaryZeplinDirectory = nil;
+    isDir = nil;
+    fileManager = nil;
+
+    return path;
 }
 
-var temporaryPath = function() {
+var temporaryPathForDesignFile = function (context) {
+    var doc = context.document;
+    var path = temporaryPath();
+
+    [doc showMessage:@"Saving document…"];
+    [doc saveToURL:[NSURL fileURLWithPath: path] ofType:@"com.bohemiancoding.sketch.drawing.single" forSaveOperation:NSSaveToOperation delegate:nil didSaveSelector:nil contextInfo:nil];
+
+    var fileManager = [NSFileManager defaultManager];
+    var stopTime = [NSDate dateWithTimeIntervalSinceNow:30];
+    while (![fileManager fileExistsAtPath:path] && [stopTime compare:[NSDate date]] == NSOrderedDescending) {
+        [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
+    }
+
+    if (![fileManager fileExistsAtPath:path]) {
+        [doc showMessage:@"Saving document failed…"];
+
+        return nil;
+    }
+
+    fileManager = nil;
+    stopTime = nil;
+
+    return path;
+}
+
+var directivesPath = function() {
     var name = [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"zpl"];
     var temporaryDirectory = NSTemporaryDirectory();
     var path = [temporaryDirectory stringByAppendingPathComponent:name];
@@ -40,7 +57,7 @@ var temporaryPath = function() {
     return path;
 }
 
-var defaultDirectives = function(context, path) {
+var defaultDirectives = function(context, temporaryPath) {
     var doc = context.document;
 
     var format = @"json";
@@ -90,7 +107,8 @@ var defaultDirectives = function(context, path) {
     var sketchmigratePath = [[NSBundle mainBundle] pathForResource:@"sketchmigrate" ofType:nil inDirectory:@"sketchtool/bin"];
 
     var directives = [NSMutableDictionary dictionary];
-    [directives setObject:[[doc fileURL] path] forKey:@"path"];
+    [directives setObject:temporaryPath forKey:@"temporaryPath"];
+    [directives setObject:[[doc fileURL] path] forKey:@"path"]; // legacy
     [directives setObject:format forKey:@"format"];
     [directives setObject:assetLibraries forKey:@"assetLibraries"];
     if (version) {
@@ -141,7 +159,7 @@ var launchZeplin = function (context, path) {
     applicationPath = nil;
 }
 
-var exportArtboards = function (context, artboards) {
+var exportArtboards = function (context, artboards, temporaryPath) {
     var doc = context.document;
 
     var foreignSymbolsUpToDate = true;
@@ -242,9 +260,8 @@ var exportArtboards = function (context, artboards) {
 
     artboard = nil;
     allArtboardsLoop = nil;
-    
-    var path = temporaryPath();
-    var directives = defaultDirectives(context, path);
+
+    var directives = defaultDirectives(context, temporaryPath);
     [directives setObject:@"artboards" forKey:@"type"];
     [directives setObject:artboardIds forKey:@"artboardIds"];
     [directives setObject:pageIds forKey:@"pageIds"];
@@ -257,6 +274,7 @@ var exportArtboards = function (context, artboards) {
     uniqueArtboardSizes = nil;
     artboardNamesByIdentifier = nil;
     
+    var path = directivesPath();
     writeDirectives(directives, path);
 
     directives = nil;
@@ -266,11 +284,11 @@ var exportArtboards = function (context, artboards) {
     path = nil;
 }
 
-var exportObjectsForType = function (context, type) {
-    var path = temporaryPath();
-    var directives = defaultDirectives(context, path);
+var exportObjectsForType = function (context, type, temporaryPath) {
+    var directives = defaultDirectives(context, temporaryPath);
     [directives setObject:type forKey:@"type"];
 
+    var path = directivesPath();
     writeDirectives(directives, path);
 
     directives = nil;
