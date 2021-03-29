@@ -1,7 +1,8 @@
 @import "utils.cocoascript";
 
 var onRun = function (context) {
-    if (!documentExportable(context)) {
+    var temporaryPath = temporaryPathForDesignFile(context);
+    if (!temporaryPath) {
         return;
     }
     
@@ -11,27 +12,30 @@ var onRun = function (context) {
         return;
     }
 
-    exportArtboards(context, artboards);
+    exportArtboards(context, artboards, temporaryPath);
 }
 
 var exportColors = function (context) {
-    if (!documentExportable(context)) {
+    var temporaryPath = temporaryPathForDesignFile(context);
+    if (!temporaryPath) {
         return;
     }
 
-    exportObjectsForType(context, @"colors");
+    exportObjectsForType(context, @"colors", temporaryPath);
 }
 
 var exportTextStyles = function (context) {
-    if (!documentExportable(context)) {
+    var temporaryPath = temporaryPathForDesignFile(context);
+    if (!temporaryPath) {
         return;
     }
 
-    exportObjectsForType(context, @"textStyles");
+    exportObjectsForType(context, @"textStyles", temporaryPath);
 }
 
 var exportArtboardsFromCurrentPage = function (context) {
-    if (!documentExportable(context)) {
+    var temporaryPath = temporaryPathForDesignFile(context);
+    if (!temporaryPath) {
         return;
     }
 
@@ -43,11 +47,12 @@ var exportArtboardsFromCurrentPage = function (context) {
         return;
     }
 
-    exportArtboards(context, artboards);
+    exportArtboards(context, artboards, temporaryPath);
 }
 
 var exportArtboardsFromAllPages = function (context) {
-    if (!documentExportable(context)) {
+    var temporaryPath = temporaryPathForDesignFile(context);
+    if (!temporaryPath) {
         return;
     }
 
@@ -59,11 +64,12 @@ var exportArtboardsFromAllPages = function (context) {
         return;
     }
 
-    exportArtboards(context, artboards);
+    exportArtboards(context, artboards, temporaryPath);
 }
 
 var exportSymbolsFromCurrentPage = function (context) {
-    if (!documentExportable(context)) {
+    var temporaryPath = temporaryPathForDesignFile(context);
+    if (!temporaryPath) {
         return;
     }
 
@@ -75,11 +81,12 @@ var exportSymbolsFromCurrentPage = function (context) {
         return;
     }
 
-    exportArtboards(context, artboards);
+    exportArtboards(context, artboards, temporaryPath);
 }
 
 var exportSymbolsFromAllPages = function (context) {
-    if (!documentExportable(context)) {
+    var temporaryPath = temporaryPathForDesignFile(context);
+    if (!temporaryPath) {
         return;
     }
 
@@ -91,7 +98,7 @@ var exportSymbolsFromAllPages = function (context) {
         return;
     }
 
-    exportArtboards(context, artboards);
+    exportArtboards(context, artboards, temporaryPath);
 }
 
 var excludeSublayers = function (context) {
