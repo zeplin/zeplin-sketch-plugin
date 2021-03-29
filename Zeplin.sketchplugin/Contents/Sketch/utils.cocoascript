@@ -108,7 +108,7 @@ var defaultDirectives = function(context, temporaryPath) {
 
     var directives = [NSMutableDictionary dictionary];
     [directives setObject:temporaryPath forKey:@"temporaryPath"];
-    [directives setObject:[[doc fileURL] path] forKey:@"path"]; // legacy
+    [directives setObject:[[doc fileURL] path] forKey:@"path"];
     [directives setObject:format forKey:@"format"];
     [directives setObject:assetLibraries forKey:@"assetLibraries"];
     if (version) {
