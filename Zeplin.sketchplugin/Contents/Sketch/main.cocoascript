@@ -1,14 +1,18 @@
 @import "utils.cocoascript";
 
 var onRun = function (context) {
-    var temporaryPath = temporaryPathForDesignFile(context);
-    if (!temporaryPath) {
-        return;
-    }
-    
     var artboards = [context valueForKeyPath:@"selection.@distinctUnionOfObjects.parentArtboard"];
     if (![artboards count]) {
         [NSApp displayDialog:@"Please select the artboards you want to export to Zeplin.\n\n☝️ Selecting a layer inside the artboard should be enough." withTitle:@"No artboard selected"];
+        return;
+    }
+
+    if (!isSelectionExportable(artboards)) {
+        return;
+    }
+
+    var temporaryPath = temporaryPathForDesignFile(context);
+    if (!temporaryPath) {
         return;
     }
 
@@ -34,16 +38,19 @@ var exportTextStyles = function (context) {
 }
 
 var exportArtboardsFromCurrentPage = function (context) {
-    var temporaryPath = temporaryPathForDesignFile(context);
-    if (!temporaryPath) {
-        return;
-    }
-
     var artboards = layersOfPagesWithClassName(NSArray.arrayWithObject(context.document.currentPage()), "MSArtboardGroup");
-
     if (![artboards count]) {
         [NSApp displayDialog:@"Please create an artboard to export to Zeplin." withTitle:@"No artboard found"];
 
+        return;
+    }
+
+    if (!isSelectionExportable(artboards)) {
+        return;
+    }
+
+    var temporaryPath = temporaryPathForDesignFile(context);
+    if (!temporaryPath) {
         return;
     }
 
@@ -51,16 +58,19 @@ var exportArtboardsFromCurrentPage = function (context) {
 }
 
 var exportArtboardsFromAllPages = function (context) {
-    var temporaryPath = temporaryPathForDesignFile(context);
-    if (!temporaryPath) {
-        return;
-    }
-
     var artboards = layersOfPagesWithClassName(context.document.pages(), "MSArtboardGroup");
-
     if (![artboards count]) {
         [NSApp displayDialog:@"Please create an artboard to export to Zeplin." withTitle:@"No artboard found"];
 
+        return;
+    }
+
+    if (!isSelectionExportable(artboards)) {
+        return;
+    }
+
+    var temporaryPath = temporaryPathForDesignFile(context);
+    if (!temporaryPath) {
         return;
     }
 
@@ -68,16 +78,19 @@ var exportArtboardsFromAllPages = function (context) {
 }
 
 var exportSymbolsFromCurrentPage = function (context) {
-    var temporaryPath = temporaryPathForDesignFile(context);
-    if (!temporaryPath) {
-        return;
-    }
-
     var artboards = layersOfPagesWithClassName(NSArray.arrayWithObject(context.document.currentPage()), "MSSymbolMaster");
-
     if (![artboards count]) {
         [NSApp displayDialog:@"Please create a symbol to export to Zeplin." withTitle:@"No symbol found"];
 
+        return;
+    }
+
+    if (!isSelectionExportable(artboards)) {
+        return;
+    }
+
+    var temporaryPath = temporaryPathForDesignFile(context);
+    if (!temporaryPath) {
         return;
     }
 
@@ -85,16 +98,19 @@ var exportSymbolsFromCurrentPage = function (context) {
 }
 
 var exportSymbolsFromAllPages = function (context) {
-    var temporaryPath = temporaryPathForDesignFile(context);
-    if (!temporaryPath) {
-        return;
-    }
-
     var artboards = layersOfPagesWithClassName(context.document.pages(), "MSSymbolMaster");
-
     if (![artboards count]) {
         [NSApp displayDialog:@"Please create a symbol to export to Zeplin." withTitle:@"No symbol found"];
 
+        return;
+    }
+
+    if (!isSelectionExportable(artboards)) {
+        return;
+    }
+
+    var temporaryPath = temporaryPathForDesignFile(context);
+    if (!temporaryPath) {
         return;
     }
 
@@ -105,17 +121,17 @@ var excludeSublayers = function (context) {
     var selection = context.selection;
     var layerEnumerator = [selection objectEnumerator];
     var layer;
-    
+
     while (layer = [layerEnumerator nextObject]) {
         var layerName = [layer name];
-        
+
         if (![layerName hasPrefix:@"-g-"]) {
             [layer setName:[@"-g-" stringByAppendingString:layerName]];
         }
-        
+
         layerName = nil;
     }
-    
+
     layer = nil;
     layerEnumerator = nil;
     selection = nil;
@@ -125,17 +141,17 @@ var includeSublayers = function (context) {
     var selection = context.selection;
     var layerEnumerator = [selection objectEnumerator];
     var layer;
-    
+
     while (layer = [layerEnumerator nextObject]) {
         var layerName = [layer name];
-        
+
         if ([layerName hasPrefix:@"-g-"]) {
             [layer setName:[layerName substringFromIndex:3]];
         }
-        
+
         layerName = nil;
     }
-    
+
     layer = nil;
     layerEnumerator = nil;
     selection = nil;
