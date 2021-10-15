@@ -4,7 +4,7 @@
     "author": "Zeplin, Inc.",
     "authorEmail": "dev@zeplin.io",
     "homepage": "https://zeplin.io",
-    "version": "1.10",
+    "version": "1.11",
     "identifier": "io.zeplin.sketch-plugin",
     "icon": "Icons/icZeplin.png",
     "commands": [{
@@ -94,7 +94,7 @@
                 "title": "Utilities",
                 "items": [
                     "exclude-sublayers",
-                    "include-sublayers"                    
+                    "include-sublayers"
                 ]
             }
         ]
