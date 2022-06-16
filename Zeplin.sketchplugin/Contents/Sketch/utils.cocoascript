@@ -178,6 +178,14 @@ var getShareId = function (context) {
     return nil;
 }
 
+var getSourceFileName = function (context) {
+    try {
+        return context.document.displayName();
+    } catch (error) {
+        log("Getting source file name failed with error “" + error + "”."));
+    }
+}
+
 var launchZeplin = function (context, path) {
     var doc = context.document;
     var workspace = [NSWorkspace sharedWorkspace];
@@ -200,6 +208,7 @@ var launchZeplin = function (context, path) {
 var exportArtboards = function (context, artboards, temporaryPath) {
     var doc = context.document;
     var shareId = getShareId(context);
+    var sourceFileName = getSourceFileName(context);
 
     var foreignSymbolsUpToDate = true;
     // `MSBadgeController` is defined on Sketch 44, `activeWindowBadgingActions` is defined on Sketch 46.
@@ -310,6 +319,10 @@ var exportArtboards = function (context, artboards, temporaryPath) {
 
     if (shareId) {
         [directives setObject:shareId forKey:@"shareId"];
+    }
+
+    if (sourceFileName) {
+        [directives setObject:sourceFileName forKey:@"sourceFileName"];
     }
 
     shareId = nil;
