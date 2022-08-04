@@ -1,31 +1,17 @@
-## Change description
+## Summary of the changes
 
-> Description here
+The changes in this PR include
 
-## Type of change
-- [ ] Bug fix (fixes an issue)
-- [ ] New feature (adds functionality)
+- [ ] ...
 
-## Related issues
+Ask yourself the questions below and write their answers if needed:
 
-> Fix [#1]() 
+- Is there anything important to consider while reviewing?
+- Do you need to do any additional development or fixes before merging this PR?
 
-## Checklists
+## Checklist
 
-### Development
-
-- [ ] Lint rules pass locally
-- [ ] Application changes have been tested thoroughly
-- [ ] Automated tests covering modified code pass
-
-### Security
-
-- [ ] Security impact of change has been considered
-- [ ] Code follows company security practices and guidelines
-
-### Code review 
-
-- [ ] Pull request has a descriptive title and context useful to a reviewer. Screenshots or screencasts are attached as necessary
-- [ ] "Ready for review" label attached and reviewers assigned
-- [ ] Changes have been reviewed by at least one other contributor
-- [ ] Pull request linked to task tracker where applicable
+- [ ] My PR has a clear and complete description.
+- [ ] I have performed a self-review of my own code.
+- [ ] I have considered the security implications of this change.
+- [ ] I have tested the changes against older versions of Sketch.
