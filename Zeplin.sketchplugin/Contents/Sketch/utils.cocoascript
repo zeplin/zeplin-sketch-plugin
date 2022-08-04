@@ -184,6 +184,8 @@ var getSourceFileName = function (context) {
     } catch (error) {
         log("Getting source file name failed with error “" + error + "”."));
     }
+
+    return nil;
 }
 
 var launchZeplin = function (context, path) {
@@ -326,6 +328,7 @@ var exportArtboards = function (context, artboards, temporaryPath) {
     }
 
     shareId = nil;
+    sourceFileName = nil;
     artboardIds = nil;
     pageIds = nil;
     uniqueArtboardSizes = nil;
