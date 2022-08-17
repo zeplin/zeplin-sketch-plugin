@@ -1,21 +1,28 @@
 var isSelectionExportable = function (artboards) {
-    var artboardPixelLimit = 1000000000; // 1e9
     var overSizedArtboardName = nil;
+    // `size` on `CGRect` fails on Mocha, on macOS 13.0 same as macOS 10.13, Sketch 45 and below.
+    try {
+        var artboardPixelLimit = 1000000000; // 1e9
 
-    var artboardsLoop = [artboards objectEnumerator];
-    var artboard = nil;
-    while (artboard = [artboardsLoop nextObject]) {
-        var artboardSize = artboard.rect().size;
-        if (artboardSize.width * artboardSize.height > artboardPixelLimit) {
-            overSizedArtboardName = artboard.name();
-            break;
+        var artboardsLoop = [artboards objectEnumerator];
+        var artboard = nil;
+        while (artboard = [artboardsLoop nextObject]) {
+            var artboardSize = artboard.rect().size;
+            if (artboardSize.width * artboardSize.height > artboardPixelLimit) {
+                overSizedArtboardName = artboard.name();
+                break;
+            }
         }
-    }
 
-    artboardSize = nil;
-    artboard = nil;
-    artboardsLoop = nil;
-    artboardPixelLimit = nil;
+        artboardSize = nil;
+        artboard = nil;
+        artboardsLoop = nil;
+        artboardPixelLimit = nil;
+    } catch (error) {
+        log("Checking oversized artboards failed with error “" + error + "”.");
+
+        return true;
+    }
 
     if (overSizedArtboardName) {
         [NSApp displayDialog:@"Selected artboard “" + overSizedArtboardName + "” is too large to export. Due to a limitation in Sketch, it’s only possible to export artboards smaller than 30,000 px ⨉ 30,000 px.\n\n☝️ You can divide the artboard into multiple artboards and export again." withTitle:@"Artboard too large"];
@@ -266,7 +273,7 @@ var exportArtboards = function (context, artboards, temporaryPath) {
     artboardsLoop = nil;
 
     var uniqueArtboardSizes = [];
-    // `size` on `CGRect` fails on Mocha, on macOS 10.13, Sketch 45 and below.
+    // `size` on `CGRect` fails on Mocha, on macOS 13.0 same as macOS 10.13, Sketch 45 and below.
     try {
         var loop = [artboards objectEnumerator];
         var artboard = nil;
