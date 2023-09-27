@@ -38,10 +38,8 @@ var temporaryPath = function() {
     var temporaryDirectory = NSTemporaryDirectory();
     var temporaryZeplinDirectory = [temporaryDirectory stringByAppendingPathComponent:@"io.zeplin.osx"];
 
-    var isDir = MOPointer.alloc().initWithValue_(false);
     var fileManager = [NSFileManager defaultManager];
-    if (![fileManager fileExistsAtPath:temporaryZeplinDirectory isDirectory:isDir] || isDir.value() == false) {
-        [fileManager removeItemAtPath:temporaryZeplinDirectory error:nil];
+    if (![fileManager fileExistsAtPath:temporaryZeplinDirectory]) {
         [fileManager createDirectoryAtPath:temporaryZeplinDirectory withIntermediateDirectories:true attributes:nil error:nil];
     }
 
