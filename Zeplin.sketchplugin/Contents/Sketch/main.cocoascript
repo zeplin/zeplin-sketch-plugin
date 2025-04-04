@@ -1,7 +1,13 @@
 @import "utils.cocoascript";
 
 var onRun = function (context) {
-    var artboards = [context valueForKeyPath:@"selection.@distinctUnionOfObjects.parentArtboard"];
+    var artboards = [];
+    if (supportsFrame()) {
+        artboards = [context valueForKeyPath:@"selection.@distinctUnionOfObjects.parentFrame"];
+    } else {
+        artboards = [context valueForKeyPath:@"selection.@distinctUnionOfObjects.parentArtboard"];
+    }
+
     if (![artboards count]) {
         [NSApp displayDialog:@"Please select the artboards you want to export to Zeplin.\n\n☝️ Selecting a layer inside the artboard should be enough." withTitle:@"No artboard selected"];
         return;
@@ -38,9 +44,10 @@ var exportTextStyles = function (context) {
 }
 
 var exportArtboardsFromCurrentPage = function (context) {
-    var artboards = layersOfPagesWithClassName(NSArray.arrayWithObject(context.document.currentPage()), "MSArtboardGroup");
+    var artboards = layersOfPagesWithType(NSArray.arrayWithObject(context.document.currentPage()), @"artboard");
     if (![artboards count]) {
-        [NSApp displayDialog:@"Please create an artboard to export to Zeplin." withTitle:@"No artboard found"];
+        var artboardType = supportsFrame() ? @"a frame" : @"an artboard";
+        [NSApp displayDialog:@"Please create " + artboardType + " to export to Zeplin." withTitle:@"No " + artboardType + " found"];
 
         return;
     }
@@ -58,9 +65,10 @@ var exportArtboardsFromCurrentPage = function (context) {
 }
 
 var exportArtboardsFromAllPages = function (context) {
-    var artboards = layersOfPagesWithClassName(context.document.pages(), "MSArtboardGroup");
+    var artboards = layersOfPagesWithType(context.document.pages(), @"artboard");
     if (![artboards count]) {
-        [NSApp displayDialog:@"Please create an artboard to export to Zeplin." withTitle:@"No artboard found"];
+        var artboardType = supportsFrame() ? @"a frame" : @"an artboard";
+        [NSApp displayDialog:@"Please create " + artboardType + " to export to Zeplin." withTitle:@"No " + artboardType + " found"];
 
         return;
     }
@@ -78,7 +86,7 @@ var exportArtboardsFromAllPages = function (context) {
 }
 
 var exportSymbolsFromCurrentPage = function (context) {
-    var artboards = layersOfPagesWithClassName(NSArray.arrayWithObject(context.document.currentPage()), "MSSymbolMaster");
+    var artboards = layersOfPagesWithType(NSArray.arrayWithObject(context.document.currentPage()), @"symbol");
     if (![artboards count]) {
         [NSApp displayDialog:@"Please create a symbol to export to Zeplin." withTitle:@"No symbol found"];
 
@@ -98,7 +106,7 @@ var exportSymbolsFromCurrentPage = function (context) {
 }
 
 var exportSymbolsFromAllPages = function (context) {
-    var artboards = layersOfPagesWithClassName(context.document.pages(), "MSSymbolMaster");
+    var artboards = layersOfPagesWithType(context.document.pages(), @"symbol");
     if (![artboards count]) {
         [NSApp displayDialog:@"Please create a symbol to export to Zeplin." withTitle:@"No symbol found"];
 
