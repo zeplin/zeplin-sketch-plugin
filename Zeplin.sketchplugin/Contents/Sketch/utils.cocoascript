@@ -1,31 +1,38 @@
-var isSelectionExportable = function (artboards) {
-    var overSizedArtboardName = nil;
+var supportsFrame = function() {
+    var version = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+
+    return [version compare:@"2025.1" options:NSNumericSearch] != NSOrderedAscending;
+}
+
+var isSelectionExportable = function (layers) {
+    var overSizedLayerName = nil;
     // `size` on `CGRect` fails on Mocha, on macOS 13.0 same as macOS 10.13, Sketch 45 and below.
     try {
-        var artboardPixelLimit = 1000000000; // 1e9
+        var layerPixelLimit = 1000000000; // 1e9
 
-        var artboardsLoop = [artboards objectEnumerator];
-        var artboard = nil;
-        while (artboard = [artboardsLoop nextObject]) {
-            var artboardSize = artboard.rect().size;
-            if (artboardSize.width * artboardSize.height > artboardPixelLimit) {
-                overSizedArtboardName = artboard.name();
+        var layersLoop = [layers objectEnumerator];
+        var layer = nil;
+        while (layer = [layersLoop nextObject]) {
+            var layerSize = layer.rect().size;
+            if (layerSize.width * layerSize.height > layerPixelLimit) {
+                overSizedLayerName = layer.name();
                 break;
             }
         }
 
-        artboardSize = nil;
-        artboard = nil;
-        artboardsLoop = nil;
-        artboardPixelLimit = nil;
+        layerSize = nil;
+        layer = nil;
+        layersLoop = nil;
+        layerPixelLimit = nil;
     } catch (error) {
         log("Checking oversized artboards failed with error “" + error + "”.");
 
         return true;
     }
 
-    if (overSizedArtboardName) {
-        [NSApp displayDialog:@"Selected artboard “" + overSizedArtboardName + "” is too large to export. Due to a limitation in Sketch, it’s only possible to export artboards smaller than 30,000 px ⨉ 30,000 px.\n\n☝️ You can divide the artboard into multiple artboards and export again." withTitle:@"Artboard too large"];
+    if (overSizedLayerName) {
+        var artboardType = supportsFrame() ? @"frame" : @"artboard";
+        [NSApp displayDialog:@"Selected " + artboardType + " “" + overSizedLayerName + "” is too large to export. Due to a limitation in Sketch, it’s only possible to export " + artboardType + "s smaller than 30,000 px ⨉ 30,000 px.\n\n☝️ You can divide the " + artboardType + " into multiple " + artboardType + "s and export again." withTitle: [artboardType capitalizedString] + @" too large"];
 
         return false;
     }
@@ -93,48 +100,6 @@ var directivesPath = function() {
 var defaultDirectives = function(context, temporaryPath) {
     var doc = context.document;
 
-    var format = @"json";
-    var readerClass = NSClassFromString(@"MSDocumentReader");
-    var jsonReaderClass = NSClassFromString(@"MSDocumentZippedJSONReader");
-    if (!readerClass || !jsonReaderClass || ![[readerClass readerForDocumentAtURL:[doc fileURL]] isKindOfClass:jsonReaderClass]) {
-        format = @"legacy";
-    }
-
-    jsonReaderClass = nil;
-    readerClass = nil;
-
-    var assetLibraries = [];
-    // `MSAssetLibraryController` defined on Sketch 47.
-    try {
-        var assetLibrariesLoop = [[[[AppController sharedInstance] librariesController] libraries] objectEnumerator];
-        var assetLibrary = nil;
-        while (assetLibrary = [assetLibrariesLoop nextObject]) {
-            if (![assetLibrary enabled]) {
-                continue;
-            }
-
-            var libraryID = [assetLibrary libraryID];
-            if (!libraryID) {
-                continue;
-            }
-
-            var url = [assetLibrary locationOnDisk];
-            if (!url) {
-                continue;
-            }
-
-            assetLibraries.push({
-                id: libraryID,
-                path: [url path]
-            });
-        }
-
-        assetLibrary = nil;
-        assetLibrariesLoop = nil;
-    } catch (error) {
-        log("Asset library paths by identifier failed with error “" + error + "”.");
-    }
-
     var version = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
     var sketchtoolPath = [[NSBundle mainBundle] pathForResource:@"sketchtool" ofType:nil inDirectory:@"sketchtool/bin"];
     var sketchmigratePath = [[NSBundle mainBundle] pathForResource:@"sketchmigrate" ofType:nil inDirectory:@"sketchtool/bin"];
@@ -142,8 +107,7 @@ var defaultDirectives = function(context, temporaryPath) {
     var directives = [NSMutableDictionary dictionary];
     [directives setObject:temporaryPath forKey:@"temporaryPath"];
     [directives setObject:[[doc fileURL] path] forKey:@"path"];
-    [directives setObject:format forKey:@"format"];
-    [directives setObject:assetLibraries forKey:@"assetLibraries"];
+    [directives setObject:@"json" forKey:@"format"];
     if (version) {
         [directives setObject:version forKey:@"version"];
     }
@@ -217,37 +181,6 @@ var exportArtboards = function (context, artboards, temporaryPath) {
     var shareId = getShareId(context);
     var sourceFileName = getSourceFileName(context);
 
-    var foreignSymbolsUpToDate = true;
-    // `MSBadgeController` is defined on Sketch 44, `activeWindowBadgingActions` is defined on Sketch 46.
-    try {
-        var activeActions = [[doc badgeController] activeWindowBadgingActions];
-        var activeActionsLoop = [activeActions objectEnumerator];
-        var action = nil;
-        while (action = [activeActionsLoop nextObject]) {
-            if ([action isKindOfClass:NSClassFromString(@"MSSyncLibraryAction")]) {
-                foreignSymbolsUpToDate = false;
-
-                break;
-            }
-        }
-
-        action = nil;
-        activeActionsLoop = nil;
-        activeActions = nil;
-    } catch (error) {
-        log("Foreign symbols up to date failed with error “" + error + "”.");
-    }
-
-    if (!foreignSymbolsUpToDate) {
-        var alert = [NSAlert alertWithMessageText:@"Symbols not up to date" defaultButton:@"Continue and Export" alternateButton:@"Cancel" otherButton:nil informativeTextWithFormat:@"To capture the latest changes in your libraries, make sure that your symbols are up to date before exporting artboards to Zeplin.\n\n☝️ Select “Library Update Available” on the top right to review changes."];
-
-        if ([alert runModal] == NSAlertAlternateReturn) {
-            return;
-        }
-
-        alert = nil;
-    }
-
     var artboardIds = [artboards valueForKeyPath:@"objectID"];
 
     var layers = [[[doc documentData] allSymbols] arrayByAddingObjectsFromArray:artboards];
@@ -259,8 +192,7 @@ var exportArtboards = function (context, artboards, temporaryPath) {
     var artboardsLoop = [artboards objectEnumerator];
     var artboard = nil;
     while (artboard = [artboardsLoop nextObject]) {
-        var artboardClassName = NSStringFromClass([artboard class]);
-        if ([artboardClassName isEqualToString:@"MSArtboardGroup"]) {
+        if (isLayerOfType(artboard, @"artboard")) {
             containsArtboard = true;
 
             break;
@@ -307,12 +239,14 @@ var exportArtboards = function (context, artboards, temporaryPath) {
     artboards = nil;
 
     var artboardNamesByIdentifier = {};
-    var allArtboardsLoop = [[doc valueForKeyPath:@"pages.@distinctUnionOfArrays.artboards"] objectEnumerator];
+    var pages = [doc pages];
+    var allArtboardsLoop = layersOfPagesWithType(pages, @"artboard").objectEnumerator();
     var artboard = nil;
     while (artboard = [allArtboardsLoop nextObject]) {
         artboardNamesByIdentifier[artboard.objectID()] = artboard.name();
     }
 
+    pages = nil;
     artboard = nil;
     allArtboardsLoop = nil;
 
@@ -363,7 +297,7 @@ var exportObjectsForType = function (context, type, temporaryPath) {
     path = nil;
 }
 
-var layersOfPagesWithClassName = function (pages, className) {
+var layersOfPagesWithType = function (pages, type) {
     var layers = [];
     var pagesLoop = pages.objectEnumerator();
     var page = nil;
@@ -374,9 +308,7 @@ var layersOfPagesWithClassName = function (pages, className) {
         var layer = nil;
 
         while (layer = [layersLoop nextObject]) {
-            var layerClassName = NSStringFromClass([layer class]);
-
-            if ([layerClassName isEqualToString:className]) {
+            if (isLayerOfType(layer, type)) {
                 pageLayers.push(layer);
             }
         }
@@ -385,4 +317,23 @@ var layersOfPagesWithClassName = function (pages, className) {
     }
 
     return NSArray.arrayWithArray(layers);
+}
+
+var isLayerOfType = function (layer, type) {
+    var layerClassName = NSStringFromClass([layer class]);
+    if ([type isEqualToString: @"symbol"]) {
+        if ([layerClassName isEqualToString:@"MSSymbolMaster"]) {
+            return true;
+        }
+    } else if ([type isEqualToString: @"artboard"]) {
+        if (supportsFrame()) {
+            if ([layerClassName isEqualToString: @"MSLayerGroup"]) {
+                return [layer valueForKeyPath: @"groupBehavior"] != 0;
+            }
+        } else {
+            return [layerClassName isEqualToString: @"MSArtboardGroup"];
+        }
+    }
+
+    return false;
 }
