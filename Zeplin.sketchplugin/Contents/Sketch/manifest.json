@@ -1,78 +1,88 @@
 {
     "name": "Zeplin",
-    "description": "Export artboards, symbols, colors and text styles to Zeplin. 🚀",
+    "description": "Export frames/artboards, symbols and styles to Zeplin. 🛵",
     "author": "Zeplin, Inc.",
     "authorEmail": "dev@zeplin.io",
     "homepage": "https://zeplin.io",
-    "version": "1.15",
+    "version": "1.16",
     "identifier": "io.zeplin.sketch-plugin",
     "icon": "Icons/icZeplin.png",
-    "commands": [{
-        "name": "Export Selected…",
-        "identifier": "export",
-        "shortcut": "cmd ctrl e",
-        "script": "main.cocoascript",
-        "icon": "Icons/icZeplinRunner.png",
-        "description": "Export selected artboards and symbols to Zeplin."
-    }, {
-        "name": "Export Colors…",
-        "identifier": "exportColors",
-        "script": "main.cocoascript",
-        "handler": "exportColors",
-        "icon": "Icons/icZeplinRunner.png",
-        "description": "Export colors to Zeplin."
-    }, {
-        "name": "Export Text Styles…",
-        "identifier": "exportTextStyles",
-        "script": "main.cocoascript",
-        "handler": "exportTextStyles",
-        "icon": "Icons/icZeplinRunner.png",
-        "description": "Export text styles to Zeplin."
-    }, {
-        "name": "Artboards from Current Page…",
-        "identifier": "artboardsFromCurrentPage",
-        "script": "main.cocoascript",
-        "handler": "exportArtboardsFromCurrentPage",
-        "icon": "Icons/icZeplinRunner.png",
-        "description": "Export artboards from current page to Zeplin."
-    }, {
-        "name": "Artboards from All Pages…",
-        "identifier": "artboardsFromAllPages",
-        "script": "main.cocoascript",
-        "handler": "exportArtboardsFromAllPages",
-        "icon": "Icons/icZeplinRunner.png",
-        "description": "Export artboards from all pages to Zeplin."
-    }, {
-        "name": "Symbols from Current Page…",
-        "identifier": "symbolsFromCurrentPage",
-        "script": "main.cocoascript",
-        "handler": "exportSymbolsFromCurrentPage",
-        "icon": "Icons/icZeplinRunner.png",
-        "description": "Export symbols from current page to Zeplin."
-    }, {
-        "name": "Symbols from All Pages…",
-        "identifier": "symbolsFromAllPages",
-        "script": "main.cocoascript",
-        "handler": "exportSymbolsFromAllPages",
-        "icon": "Icons/icZeplinRunner.png",
-        "description": "Export symbols from all pages to Zeplin."
-    }, {
-        "name": "Exclude Sublayers",
-        "identifier": "exclude-sublayers",
-        "shortcut": "cmd shift x",
-        "script": "main.cocoascript",
-        "handler": "excludeSublayers",
-        "icon": "Icons/icZeplinRunner.png",
-        "description": "Exclude sublayers of selected groups or symbols."
-    }, {
-        "name": "Include Sublayers",
-        "identifier": "include-sublayers",
-        "shortcut": "cmd shift i",
-        "script": "main.cocoascript",
-        "handler": "includeSublayers",
-        "icon": "Icons/icZeplinRunner.png",
-        "description": "Include sublayers of selected groups or symbols."
-    }],
+    "commands": [
+        {
+            "name": "Export Selected…",
+            "identifier": "export",
+            "shortcut": "cmd ctrl e",
+            "script": "main.cocoascript",
+            "icon": "Icons/icZeplinRunner.png",
+            "description": "Export selected frames/artboards and symbols to Zeplin."
+        },
+        {
+            "name": "Export Colors…",
+            "identifier": "exportColors",
+            "script": "main.cocoascript",
+            "handler": "exportColors",
+            "icon": "Icons/icZeplinRunner.png",
+            "description": "Export colors to Zeplin."
+        },
+        {
+            "name": "Export Text Styles…",
+            "identifier": "exportTextStyles",
+            "script": "main.cocoascript",
+            "handler": "exportTextStyles",
+            "icon": "Icons/icZeplinRunner.png",
+            "description": "Export text styles to Zeplin."
+        },
+        {
+            "name": "Frames/Artboards from Current Page…",
+            "identifier": "artboardsFromCurrentPage",
+            "script": "main.cocoascript",
+            "handler": "exportArtboardsFromCurrentPage",
+            "icon": "Icons/icZeplinRunner.png",
+            "description": "Export frames/artboards from current page to Zeplin."
+        },
+        {
+            "name": "Frames/Artboards from All Pages…",
+            "identifier": "artboardsFromAllPages",
+            "script": "main.cocoascript",
+            "handler": "exportArtboardsFromAllPages",
+            "icon": "Icons/icZeplinRunner.png",
+            "description": "Export frames/artboards from all pages to Zeplin."
+        },
+        {
+            "name": "Symbols from Current Page…",
+            "identifier": "symbolsFromCurrentPage",
+            "script": "main.cocoascript",
+            "handler": "exportSymbolsFromCurrentPage",
+            "icon": "Icons/icZeplinRunner.png",
+            "description": "Export symbols from current page to Zeplin."
+        },
+        {
+            "name": "Symbols from All Pages…",
+            "identifier": "symbolsFromAllPages",
+            "script": "main.cocoascript",
+            "handler": "exportSymbolsFromAllPages",
+            "icon": "Icons/icZeplinRunner.png",
+            "description": "Export symbols from all pages to Zeplin."
+        },
+        {
+            "name": "Exclude Sublayers",
+            "identifier": "exclude-sublayers",
+            "shortcut": "cmd shift x",
+            "script": "main.cocoascript",
+            "handler": "excludeSublayers",
+            "icon": "Icons/icZeplinRunner.png",
+            "description": "Exclude sublayers of selected groups or symbols."
+        },
+        {
+            "name": "Include Sublayers",
+            "identifier": "include-sublayers",
+            "shortcut": "cmd shift i",
+            "script": "main.cocoascript",
+            "handler": "includeSublayers",
+            "icon": "Icons/icZeplinRunner.png",
+            "description": "Include sublayers of selected groups or symbols."
+        }
+    ],
     "menu": {
         "items": [
             "export",
