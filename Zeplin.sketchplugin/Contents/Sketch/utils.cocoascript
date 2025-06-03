@@ -62,7 +62,7 @@ var temporaryPath = function() {
 }
 
 var temporaryPathForDesignFile = function (context) {
-    var doc = context.document;
+    var doc = [[NSDocumentController sharedDocumentController] currentDocument];
     var path = temporaryPath();
 
     [doc showMessage:@"Saving document…"];
@@ -98,7 +98,7 @@ var directivesPath = function() {
 }
 
 var defaultDirectives = function(context, temporaryPath) {
-    var doc = context.document;
+    var doc = [[NSDocumentController sharedDocumentController] currentDocument];
 
     var version = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
     var sketchtoolPath = [[NSBundle mainBundle] pathForResource:@"sketchtool" ofType:nil inDirectory:@"sketchtool/bin"];
@@ -158,7 +158,7 @@ var getSourceFileName = function (context) {
 }
 
 var launchZeplin = function (context, path) {
-    var doc = context.document;
+    var doc = [[NSDocumentController sharedDocumentController] currentDocument];
     var workspace = [NSWorkspace sharedWorkspace];
 
     var applicationPath = [workspace absolutePathForAppBundleWithIdentifier:@"io.zeplin.osx"];
@@ -177,7 +177,7 @@ var launchZeplin = function (context, path) {
 }
 
 var exportArtboards = function (context, artboards, temporaryPath) {
-    var doc = context.document;
+    var doc = [[NSDocumentController sharedDocumentController] currentDocument];
     var shareId = getShareId(context);
     var sourceFileName = getSourceFileName(context);
 
